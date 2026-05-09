@@ -61,3 +61,9 @@ Retirement note:
 - Status: active
 - Decision: The first trip creation and itinerary-generation slice uses a seeded place catalog and an in-memory trip store.
 - Why: This keeps the first real product flow small and testable before persistence, discovery ingestion, and social state are added.
+
+### D-010: Shared discovery catalog before provider ingestion
+
+- Status: active
+- Decision: City, neighborhood, and place demo data now live in the shared layer and are consumed by API, web, and mobile instead of being duplicated per app.
+- Why: This reduces contract drift and gives Milestone 3 a single normalized catalog before external providers or databases are introduced.
