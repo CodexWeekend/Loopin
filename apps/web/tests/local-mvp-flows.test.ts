@@ -11,7 +11,11 @@ import {
   createIntent,
   createTrip,
   ensureDemoData,
+  getAppUser,
   getAppBootstrapState,
+  inviteTripCollaborator,
+  listTripsForUser,
+  removeTripCollaborator,
   swapTripStop,
   updateConnection,
   updateProfile,
@@ -67,6 +71,17 @@ describe('local MVP flows', () => {
 
     expect(createdTrip.days.length).toBe(3);
 
+    const invitedCollaborator = upsertUser({
+      email: 'collab@loopin.local',
+      firstName: 'Collab',
+      image: 'https://api.dicebear.com/7.x/avataaars/svg?seed=collab',
+      lastName: 'User',
+      name: 'Collab User',
+      provider: 'credentials',
+    });
+
+    inviteTripCollaborator(user.id, createdTrip.id, invitedCollaborator.email, 'viewer');
+
     const targetDay = createdTrip.days[0]!;
     addTripStop(user.id, createdTrip.id, {
       dayId: targetDay.id,
@@ -109,13 +124,21 @@ describe('local MVP flows', () => {
 
     const after = getAppBootstrapState(user.id);
     const activeTrip = after.activeTrip;
+    const collaboratorTrips = listTripsForUser(invitedCollaborator.id);
+    const collaboratorView = getAppUser(invitedCollaborator.id);
 
     expect(after.trips.length).toBe(before.trips.length + 1);
     expect(activeTrip?.id).toBe(createdTrip.id);
     expect(activeTrip?.days[0]?.stops[0]?.place.id).toBe('senso-ji');
+    expect(activeTrip?.collaborators.some((collaborator) => collaborator.user.email === invitedCollaborator.email)).toBe(true);
     expect(after.user?.interests).toEqual(['food', 'culture', 'art']);
     expect(after.social.intents.length).toBeGreaterThan(0);
     expect(after.social.connections.some((item) => item.status === 'accepted')).toBe(true);
     expect(after.nearby.suggestions.length).toBeGreaterThan(0);
+    expect(collaboratorTrips.some((trip) => trip.id === createdTrip.id)).toBe(true);
+    expect(collaboratorView?.email).toBe(invitedCollaborator.email);
+
+    const tripAfterRemoval = removeTripCollaborator(user.id, createdTrip.id, invitedCollaborator.id);
+    expect(tripAfterRemoval.collaborators.some((collaborator) => collaborator.user.email === invitedCollaborator.email)).toBe(false);
   });
 });

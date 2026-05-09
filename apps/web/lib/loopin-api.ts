@@ -80,6 +80,11 @@ export type LoopinAction =
       type: 'invite-collaborator';
     }
   | {
+      tripId: string;
+      type: 'remove-collaborator';
+      userId: string;
+    }
+  | {
       isPublic: boolean;
       tripId: string;
       type: 'update-trip-visibility';

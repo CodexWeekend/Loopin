@@ -7,7 +7,9 @@ import {
   createTrip,
   getAppBootstrapState,
   getTripById,
+  inviteTripCollaborator,
   regenerateTripItinerary,
+  removeTripCollaborator,
   removeTripStop,
   skipTripStop,
   swapTripStop,
@@ -137,7 +139,19 @@ export function applyLoopinAction(userId: string, action: LoopinAction) {
       selectedTripId = action.tripId;
       break;
     case 'invite-collaborator':
-      selectedTripId = action.tripId;
+      selectedTripId = inviteTripCollaborator(
+        userId,
+        action.tripId,
+        action.email,
+        action.role,
+      ).id;
+      break;
+    case 'remove-collaborator':
+      selectedTripId = removeTripCollaborator(
+        userId,
+        action.tripId,
+        action.userId,
+      ).id;
       break;
     case 'update-trip-visibility':
       selectedTripId = updateTrip(userId, action.tripId, {

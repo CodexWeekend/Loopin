@@ -30,6 +30,7 @@ import {
 } from '@/lib/sample-data';
 import type {
   City,
+  Collaborator,
   Connection,
   DayPlan,
   DayStop,
@@ -138,6 +139,14 @@ type DbConnectionRow = {
   target_user_id: string;
   trip_id: string | null;
   updated_at: string;
+};
+
+type DbTripCollaboratorRow = {
+  created_at: string;
+  id: string;
+  role: Collaborator['role'];
+  trip_id: string;
+  user_id: string;
 };
 
 type UpsertUserInput = {
@@ -350,6 +359,16 @@ export function ensureDatabase() {
       FOREIGN KEY(requester_user_id) REFERENCES users(id) ON DELETE CASCADE,
       FOREIGN KEY(target_user_id) REFERENCES users(id) ON DELETE CASCADE
     );
+
+    CREATE TABLE IF NOT EXISTS trip_collaborators (
+      id TEXT PRIMARY KEY,
+      trip_id TEXT NOT NULL,
+      user_id TEXT NOT NULL,
+      role TEXT NOT NULL,
+      created_at TEXT NOT NULL,
+      FOREIGN KEY(trip_id) REFERENCES trips(id) ON DELETE CASCADE,
+      FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
+    );
   `);
 
   ensureColumn(
@@ -512,6 +531,53 @@ function getUserRow(userId: string) {
       WHERE id = ?`,
     )
     .get(userId) as DbUserRow | undefined;
+}
+
+function getUserRowByEmail(email: string) {
+  ensureDatabase();
+
+  return getDatabase()
+    .prepare(
+      `SELECT
+        id,
+        email,
+        name,
+        image,
+        created_at,
+        country_code,
+        allow_messages
+      FROM users
+      WHERE email = ?`,
+    )
+    .get(email) as DbUserRow | undefined;
+}
+
+function deriveNameFromEmail(email: string) {
+  const localPart = email.split('@')[0] ?? 'traveler';
+
+  return localPart
+    .split(/[._-]/g)
+    .filter(Boolean)
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(' ') || 'Traveler';
+}
+
+function getTripCollaboratorRows(tripId: string) {
+  ensureDatabase();
+
+  return getDatabase()
+    .prepare(
+      `SELECT
+        id,
+        trip_id,
+        user_id,
+        role,
+        created_at
+      FROM trip_collaborators
+      WHERE trip_id = ?
+      ORDER BY created_at ASC`,
+    )
+    .all(tripId) as DbTripCollaboratorRow[];
 }
 
 function getProfileRow(userId: string) {
@@ -1301,6 +1367,7 @@ function hydrateTripRow(tripRow: DbTripRow) {
   const owner = getAppUser(tripRow.user_id);
   const bookmarkedPlaceIds = bookmarkedPlaceIdsForTrip(tripRow.id);
   const dayRows = getTripDayRows(tripRow.id);
+  const collaboratorRows = getTripCollaboratorRows(tripRow.id);
 
   const days: DayPlan[] = dayRows.map((dayRow) => {
     const stopRows = getDatabase()
@@ -1358,17 +1425,34 @@ function hydrateTripRow(tripRow: DbTripRow) {
     };
   });
 
+  const collaborators: Collaborator[] = owner
+    ? [
+        {
+          invitedAt: new Date(tripRow.created_at),
+          role: 'owner' as const,
+          user: owner,
+          userId: owner.id,
+        },
+      ]
+    : [];
+
+  for (const collaboratorRow of collaboratorRows) {
+    const collaboratorUser = getAppUser(collaboratorRow.user_id);
+
+    if (!collaboratorUser || collaborators.some((entry) => entry.userId === collaboratorUser.id)) {
+      continue;
+    }
+
+    collaborators.push({
+      invitedAt: new Date(collaboratorRow.created_at),
+      role: collaboratorRow.role,
+      user: collaboratorUser,
+      userId: collaboratorUser.id,
+    });
+  }
+
   return {
-    collaborators: owner
-      ? [
-          {
-            invitedAt: new Date(tripRow.created_at),
-            role: 'owner' as const,
-            user: owner,
-            userId: owner.id,
-          },
-        ]
-      : [],
+    collaborators,
     createdAt: new Date(tripRow.created_at),
     days,
     destination,
@@ -1396,7 +1480,9 @@ function getAuthorizedTripRow(tripId: string, userId: string) {
     throw new Error('Trip not found.');
   }
 
-  if (trip.user_id !== userId) {
+  const isCollaborator = getTripCollaboratorRows(tripId).some((row) => row.user_id === userId);
+
+  if (trip.user_id !== userId && !isCollaborator) {
     throw new Error('Trip access denied.');
   }
 
@@ -1426,9 +1512,14 @@ export function listTripsForUser(userId: string) {
         updated_at
       FROM trips
       WHERE user_id = ?
+        OR id IN (
+          SELECT trip_id
+          FROM trip_collaborators
+          WHERE user_id = ?
+        )
       ORDER BY updated_at DESC, created_at DESC`,
     )
-    .all(userId) as DbTripRow[];
+    .all(userId, userId) as DbTripRow[];
 
   return rows.map((row) => hydrateTripRow(row));
 }
@@ -2258,6 +2349,80 @@ export function createConnection(userId: string, input: CreateConnectionInput) {
   }
 
   return getSocialState({ cityId: DEFAULT_CITY_ID }, userId).connections;
+}
+
+export function inviteTripCollaborator(
+  userId: string,
+  tripId: string,
+  email: string,
+  role: Collaborator['role'],
+) {
+  const trip = getAuthorizedTripRow(tripId, userId);
+
+  if (trip.user_id !== userId) {
+    throw new Error('Only the trip owner can invite collaborators.');
+  }
+
+  const normalizedEmail = email.trim().toLowerCase();
+
+  if (!normalizedEmail) {
+    throw new Error('Collaborator email is required.');
+  }
+
+  const collaboratorUser =
+    getUserRowByEmail(normalizedEmail) ??
+    getUserRow(
+      upsertUser({
+        allowMessages: false,
+        email: normalizedEmail,
+        firstName: deriveNameFromEmail(normalizedEmail),
+        name: deriveNameFromEmail(normalizedEmail),
+        provider: 'invite',
+      }).id,
+    );
+
+  if (!collaboratorUser) {
+    throw new Error('Failed to prepare collaborator account.');
+  }
+
+  const existing = getTripCollaboratorRows(tripId).find((row) => row.user_id === collaboratorUser.id);
+
+  if (existing) {
+    getDatabase()
+      .prepare('UPDATE trip_collaborators SET role = ?, created_at = ? WHERE id = ?')
+      .run(role, nowIso(), existing.id);
+  } else {
+    getDatabase()
+      .prepare(
+        `INSERT INTO trip_collaborators (id, trip_id, user_id, role, created_at)
+        VALUES (?, ?, ?, ?, ?)`,
+      )
+      .run(randomUUID(), tripId, collaboratorUser.id, role, nowIso());
+  }
+
+  touchTrip(tripId);
+
+  return getTripById(tripId, userId);
+}
+
+export function removeTripCollaborator(
+  userId: string,
+  tripId: string,
+  collaboratorUserId: string,
+) {
+  const trip = getAuthorizedTripRow(tripId, userId);
+
+  if (trip.user_id !== userId) {
+    throw new Error('Only the trip owner can manage collaborators.');
+  }
+
+  getDatabase()
+    .prepare('DELETE FROM trip_collaborators WHERE trip_id = ? AND user_id = ?')
+    .run(tripId, collaboratorUserId);
+
+  touchTrip(tripId);
+
+  return getTripById(tripId, userId);
 }
 
 export function updateConnection(userId: string, input: UpdateConnectionInput) {

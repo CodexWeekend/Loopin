@@ -302,6 +302,18 @@ export default function LoopinApp({
     setInviteEmail("")
   }
 
+  async function handleRemoveCollaborator(userId: string) {
+    if (!currentTrip) {
+      return
+    }
+
+    await applyAction({
+      tripId: currentTrip.id,
+      type: "remove-collaborator",
+      userId,
+    })
+  }
+
   async function handleTripVisibilityChange(isPublic: boolean) {
     if (!currentTrip) {
       return
@@ -709,6 +721,7 @@ export default function LoopinApp({
         onInviteEmailChange={setInviteEmail}
         onInviteRoleChange={setInviteRole}
         onPrintItinerary={handlePrintItinerary}
+        onRemoveCollaborator={(userId) => void handleRemoveCollaborator(userId)}
         onUpdateVisibility={(isPublic) => void handleTripVisibilityChange(isPublic)}
       />
     </div>
