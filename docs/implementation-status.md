@@ -2,16 +2,15 @@
 
 ## Current State
 
-- The repository has completed a documentation-first bootstrap milestone.
+- The repository has completed Milestone 0 and Milestone 1.
 - The original external product brief has been internalized into repo-owned docs.
 - The repo is now self-describing for new humans and coding agents.
-- The repo is still pre-scaffold:
-  - no `apps/`
-  - no `packages/`
-  - no API or UI implementation
-  - no standard scripts
-  - no CI
-- `main` remains the only shared long-term branch in remote history at this stage; the intended `dev` workflow still needs to be established.
+- The repo now includes:
+  - `apps/` and `packages/` scaffolding
+  - `init.sh`, `sync-dev.sh`, and `test-all.sh`
+  - baseline CI
+  - a real `dev` integration branch
+- The repo does not yet include the actual Loopin product runtime, API flows, or frontend trip planner features.
 
 ## Completed
 
@@ -41,6 +40,20 @@
   Why: Another contributor should be able to determine exactly what to do next and how to do it without resolving contradictions manually.
   Evidence: `README.md`, `AGENTS.md`, `docs/roadmap.md`, `docs/decision-log.md`
 
+### 2026-05-09: Monorepo scaffold and engineering baseline
+
+- What: Added the `apps/` and `packages/` monorepo skeleton with typed workspace manifests, source entrypoints, and baseline tests.
+  Why: The repo needed a working engineering structure before product features could be implemented safely in parallel.
+  Evidence: `apps/`, `packages/`, `tests/workspace-contract.test.ts`
+
+- What: Added the canonical shell scripts and CI workflow.
+  Why: Contributors need one consistent install/sync/verification path for local work and automation.
+  Evidence: `init.sh`, `sync-dev.sh`, `test-all.sh`, `.github/workflows/ci.yml`
+
+- What: Established the real `dev` integration branch and switched feature work to branch from `dev`.
+  Why: The documented branch workflow now matches the actual repo workflow.
+  Evidence: Git branch state on `origin`
+
 ## Why It Was Done
 
 - Portability: the project should not depend on `C:\Users\maiqu\Downloads\plantxt.txt` or any other machine-local file.
@@ -50,27 +63,23 @@
 
 ## Open Gaps
 
-- No monorepo scaffold yet
-- No `apps/web`, `apps/mobile`, or `apps/api`
-- No shared packages
-- No `init.sh`, `sync-dev.sh`, or `test-all.sh`
-- No CI workflow
-- No `dev` branch or normalized integration flow
-- No tests yet
-- No seeded data or initial vertical slice
+- No backend API routes yet
+- No seeded city/place data yet
+- No trip planning domain services yet
+- No real web UI or mobile app flows yet
+- No trip creation to itinerary vertical slice yet
+- No discovery, near-me, social, or offline features yet
 
 ## Next Recommended Task
 
-Implement Milestone 1 from `docs/roadmap.md`:
+Implement Milestone 2 from `docs/roadmap.md`:
 
-1. Scaffold the `apps/` and `packages/` monorepo structure.
-2. Add `pnpm` workspace configuration, shared TypeScript config, linting, and formatting.
-3. Create `./init.sh`, `./sync-dev.sh`, and `./test-all.sh`.
-4. Add CI that runs `./test-all.sh`.
-5. Record the new repo state and any new defaults in this file and `docs/decision-log.md`.
+1. Add the shared trip and itinerary domain contracts in `packages/shared`, `packages/geo`, and `packages/core`.
+2. Implement a minimal backend API flow for trip creation and naive itinerary generation.
+3. Replace the placeholder web and mobile workspaces with real app shells that render the vertical slice.
+4. Verify the new slice in targeted intervals and keep the status ledger current.
 
 ## Blocked/Needs Decision
 
-- No blocking product decision prevents Milestone 1. The current defaults are sufficient to scaffold the repo.
-- The first implementation contributor should decide whether to create the `dev` branch as part of Milestone 1 or as a separate repository administration step, then record that choice. Until then, branch from `main` using `feat/*` or `fix/*`.
+- No blocking product decision prevents Milestone 2. The current defaults are sufficient to start the first vertical slice.
 - If backend framework choice becomes urgent during scaffolding, default to a lightweight modular Node.js service that preserves the API and domain boundaries in `docs/architecture.md`.

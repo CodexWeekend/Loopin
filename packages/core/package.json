@@ -1,0 +1,11 @@
+{
+  "name": "@loopin/core",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "lint": "eslint src tests --ext .ts",
+    "test:ci": "vitest run tests/**/*.test.ts",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  }
+}
