@@ -13,6 +13,7 @@ This repository is currently in a documentation-first bootstrap phase. The repo 
 - Baseline CI in [`.github/workflows/ci.yml`](.github/workflows/ci.yml)
 - Shared trip contracts, naive itinerary logic, and the first API slice for create/get/generate trip flows
 - A real Next.js planner shell in `apps/web` for the first trip-to-itinerary experience
+- A real Expo trip shell in `apps/mobile` for the same naive trip-to-itinerary experience
 - Agent onboarding and workflow rules in [`AGENTS.md`](AGENTS.md)
 - Thin compatibility wrappers for Claude and Gemini in [`CLAUDE.md`](CLAUDE.md) and [`GEMINI.md`](GEMINI.md)
 - A current-state ledger in [`docs/implementation-status.md`](docs/implementation-status.md)
@@ -22,9 +23,9 @@ This repository is currently in a documentation-first bootstrap phase. The repo 
 ## What Does Not Exist Yet
 
 - No real product runtime yet
-- No mobile in-trip experience yet
+- No advanced in-trip mobile experience yet
 - No persistent storage yet
-- No full vertical slice rendered in mobile yet
+- No deeper discovery, near-me, or social trip flow yet
 
 Treat those gaps as known bootstrap work, not missing context.
 
@@ -88,6 +89,6 @@ The target backend is a layered architecture: interface -> application/domain se
 
 ## Current Next Step
 
-The next recommended work is the mobile half of Milestone 2: replace the placeholder mobile workspace with a real trip shell that can create a trip summary and render the naive itinerary from the current shared/API foundation.
+The next recommended work is the next product layer after Milestone 2: reduce duplicated local preview data, add persistent trip storage, and start the discovery/near-me features from Milestone 3 and 4.
 
 Use [`docs/roadmap.md`](docs/roadmap.md) and [`docs/implementation-status.md`](docs/implementation-status.md) as the operational source of truth for that work.
