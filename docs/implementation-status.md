@@ -17,7 +17,10 @@
 - The repo now includes the first Milestone 2 web slice:
   - a real Next.js planner shell at `/trips/[tripId]`
   - browser-verified itinerary rendering against the shared/core foundation
-- The repo does not yet include the mobile planner UI or persistent data storage.
+- The repo now includes the first Milestone 2 mobile slice:
+  - a real Expo trip shell with summary, day sections, and a stop detail sheet
+  - interval verification through typed client tests plus workspace lint/typecheck
+- The repo does not yet include persistent data storage, discovery ingestion, or social features.
 
 ## Completed
 
@@ -85,6 +88,16 @@
   Why: The first visual slice needed compile, test, and rendered-page evidence instead of only static code.
   Evidence: `apps/web/tests/planner-shell.test.tsx`, `apps/web/web-planner-check.png`
 
+### 2026-05-09: Mobile trip shell
+
+- What: Replaced the placeholder `apps/mobile` workspace with a real Expo trip shell using a typed trip-planner client boundary.
+  Why: The product needed the same trip-to-itinerary story on mobile before moving on to deeper discovery or social layers.
+  Evidence: `apps/mobile/App.tsx`, `apps/mobile/src/features/trip-planner/`
+
+- What: Added interval verification for the mobile shell through planner-client state tests plus mobile lint/typecheck.
+  Why: This environment can reliably verify the mobile state boundary and the Expo TS surface even without a simulator session.
+  Evidence: `apps/mobile/tests/app.test.tsx`
+
 ## Why It Was Done
 
 - Portability: the project should not depend on `C:\Users\maiqu\Downloads\plantxt.txt` or any other machine-local file.
@@ -94,8 +107,6 @@
 
 ## Open Gaps
 
-- No real mobile app flow yet
-- No trip creation to itinerary rendering flow in mobile yet
 - No persistent trip storage yet
 - No discovery ingestion beyond seeded places yet
 - No discovery, near-me, social, or offline features yet
@@ -104,10 +115,10 @@
 
 Implement Milestone 2 from `docs/roadmap.md`:
 
-1. Replace the placeholder mobile workspace with a real trip summary shell for the same flow.
-2. Keep the shared planner contracts aligned between API, web, and mobile while avoiding duplicated local seed logic.
-3. Keep verification interval-based: targeted route tests, targeted UI tests, plus lint/typecheck after each slice.
-4. Keep the status ledger current as Milestone 2 expands.
+1. Keep the shared planner contracts aligned between API, web, and mobile while reducing duplicated local seed logic.
+2. Add persistent trip storage and move seeded place data behind a shared repository boundary.
+3. Start Milestone 3 discovery work and Milestone 4 near-me work from the new shared foundations.
+4. Keep verification interval-based and keep the status ledger current as the product expands.
 
 ## Blocked/Needs Decision
 
