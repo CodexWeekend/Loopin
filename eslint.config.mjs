@@ -9,9 +9,10 @@ export default tseslint.config(
   js.configs.recommended,
   ...tseslint.configs.recommended,
   {
-    files: ['**/*.ts'],
+    files: ['**/*.{ts,tsx}'],
     languageOptions: {
       globals: {
+        ...globals.browser,
         ...globals.node,
         describe: 'readonly',
         expect: 'readonly',

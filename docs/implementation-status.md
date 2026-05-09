@@ -14,7 +14,10 @@
   - shared trip and itinerary contracts
   - naive itinerary planning logic
   - API routes for create trip, fetch trip, and generate itinerary
-- The repo does not yet include the web/mobile planner UI or persistent data storage.
+- The repo now includes the first Milestone 2 web slice:
+  - a real Next.js planner shell at `/trips/[tripId]`
+  - browser-verified itinerary rendering against the shared/core foundation
+- The repo does not yet include the mobile planner UI or persistent data storage.
 
 ## Completed
 
@@ -72,6 +75,16 @@
   Why: The product now has a real backend slice that web and mobile can consume next.
   Evidence: `apps/api/src/index.ts`, `apps/api/tests/trip-routes.test.ts`
 
+### 2026-05-09: Web planner shell
+
+- What: Replaced the placeholder `apps/web` workspace with a real Next.js App Router shell for the trip planner.
+  Why: The first end-user product surface needed to exist before the mobile shell and later features could share the same flow.
+  Evidence: `apps/web/app/`, `apps/web/src/features/trip-planner/`
+
+- What: Added browser-verified planner rendering for trip summary, itinerary timeline, map rail, and smart-swap UI.
+  Why: The first visual slice needed compile, test, and rendered-page evidence instead of only static code.
+  Evidence: `apps/web/tests/planner-shell.test.tsx`, `apps/web/web-planner-check.png`
+
 ## Why It Was Done
 
 - Portability: the project should not depend on `C:\Users\maiqu\Downloads\plantxt.txt` or any other machine-local file.
@@ -81,8 +94,8 @@
 
 ## Open Gaps
 
-- No real web UI or mobile app flows yet
-- No trip creation to itinerary rendering flow in web or mobile yet
+- No real mobile app flow yet
+- No trip creation to itinerary rendering flow in mobile yet
 - No persistent trip storage yet
 - No discovery ingestion beyond seeded places yet
 - No discovery, near-me, social, or offline features yet
@@ -91,8 +104,8 @@
 
 Implement Milestone 2 from `docs/roadmap.md`:
 
-1. Replace the placeholder web workspace with a real planner shell that can create a trip and display the generated itinerary.
-2. Replace the placeholder mobile workspace with a real trip summary shell for the same flow.
+1. Replace the placeholder mobile workspace with a real trip summary shell for the same flow.
+2. Keep the shared planner contracts aligned between API, web, and mobile while avoiding duplicated local seed logic.
 3. Keep verification interval-based: targeted route tests, targeted UI tests, plus lint/typecheck after each slice.
 4. Keep the status ledger current as Milestone 2 expands.
 
