@@ -122,6 +122,48 @@ export function filterCityPlaces({
   });
 }
 
+export function rankNearbyPlaces({
+  category,
+  minutesAvailable,
+  origin,
+  places,
+}: {
+  category?: Place['category'];
+  minutesAvailable: number;
+  origin: { lat: number; lng: number };
+  places: Pick<
+    Place,
+    'category' | 'hiddennessLabel' | 'hiddennessScore' | 'id' | 'lat' | 'lng' | 'name' | 'popularityScore' | 'summary' | 'visitDurationMinutes'
+  >[];
+}): Array<
+  Pick<Place, 'category' | 'id' | 'name' | 'summary'> & {
+    score: number;
+    travelMinutes: number;
+  }
+> {
+  return places
+    .filter((place) => !category || place.category === category)
+    .map((place) => {
+      const travelMinutes = estimateTravelMinutes(origin, place, 18);
+      const fitsTimeWindow = place.visitDurationMinutes + travelMinutes <= minutesAvailable;
+      const score =
+        (fitsTimeWindow ? 30 : -30) +
+        (place.hiddennessScore ?? 0) * 10 +
+        (place.popularityScore ?? 0) * 5 -
+        travelMinutes;
+
+      return {
+        category: place.category,
+        id: place.id,
+        name: place.name,
+        score,
+        summary: place.summary,
+        travelMinutes,
+      };
+    })
+    .sort((left, right) => right.score - left.score);
+}
+
 function enumerateTripDates(startDate: string, endDate: string): string[] {
   const current = new Date(`${startDate}T00:00:00.000Z`);
   const end = new Date(`${endDate}T00:00:00.000Z`);

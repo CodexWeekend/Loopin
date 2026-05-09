@@ -23,7 +23,10 @@
 - The repo now includes the first Milestone 3 foundation slice:
   - shared city, neighborhood, and place discovery data
   - API routes for city overview and filtered city places
-- The repo does not yet include persistent data storage, provider-backed discovery ingestion, near-me ranking, or social features.
+- The repo now includes the first Milestone 4 foundation slice:
+  - shared/core nearby recommendation ranking
+  - an API route for city-scoped nearby recommendations
+- The repo does not yet include persistent data storage, provider-backed discovery ingestion, a dedicated near-me UI flow, or social features.
 
 ## Completed
 
@@ -115,6 +118,16 @@
   Why: The product now has a reusable discovery baseline across API, web, and mobile instead of duplicated local seed data.
   Evidence: `apps/api/src/modules/discovery/`, `apps/api/tests/discovery-routes.test.ts`, `apps/web/src/features/trip-planner/lib/get-trip-planner-view.ts`, `apps/mobile/src/features/trip-planner/api/trip-planner-client.ts`
 
+### 2026-05-09: Nearby recommendation foundation
+
+- What: Added a shared nearby-recommendation query contract plus core ranking logic.
+  Why: The product needed a deterministic near-me foundation before building a dedicated UI flow or device-location integration.
+  Evidence: `packages/shared/tests/nearby-query-schemas.test.ts`, `packages/core/tests/recommendations.test.ts`
+
+- What: Added an API route for city-scoped nearby recommendations.
+  Why: Web and mobile can now consume a stable recommendation endpoint instead of inventing their own local ranking behavior.
+  Evidence: `apps/api/tests/recommendation-routes.test.ts`
+
 ## Why It Was Done
 
 - Portability: the project should not depend on `C:\Users\maiqu\Downloads\plantxt.txt` or any other machine-local file.
@@ -126,7 +139,7 @@
 
 - No persistent trip storage yet
 - No provider-backed discovery ingestion yet
-- No near-me recommendation flow yet
+- No dedicated near-me screen or interaction flow yet
 - No social or offline trip-card features yet
 
 ## Next Recommended Task
@@ -134,8 +147,8 @@
 Implement Milestone 2 from `docs/roadmap.md`:
 
 1. Add persistent trip storage and move trip state out of the in-memory API map.
-2. Replace remaining demo-only planner view shaping with shared or API-backed view builders where it materially reduces drift.
-3. Start the near-me recommendation flow on top of the shared discovery catalog and itinerary data.
+2. Build a dedicated near-me UI flow in web or mobile on top of the new recommendation endpoint.
+3. Replace remaining demo-only planner view shaping with shared or API-backed view builders where it materially reduces drift.
 4. Keep verification interval-based and keep the status ledger current as the product expands.
 
 ## Blocked/Needs Decision

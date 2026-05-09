@@ -1,7 +1,7 @@
 import type { FastifyInstance } from 'fastify';
 
-import { buildCityOverview, filterCityPlaces } from '@loopin/core';
-import { cityPlacesQuerySchema } from '@loopin/shared';
+import { buildCityOverview, filterCityPlaces, rankNearbyPlaces } from '@loopin/core';
+import { cityPlacesQuerySchema, nearbyRecommendationsQuerySchema } from '@loopin/shared';
 
 import { createDiscoveryRepository } from './repository';
 
@@ -64,6 +64,45 @@ export function registerDiscoveryRoutes(app: FastifyInstance) {
         total: filteredPlaces.length,
       },
       places: pagedPlaces,
+    };
+  });
+
+  app.get('/api/v1/cities/:citySlug/recommendations/nearby', async (request, reply) => {
+    const { citySlug } = request.params as { citySlug: string };
+    const parsedQuery = nearbyRecommendationsQuerySchema.safeParse(request.query);
+
+    if (!parsedQuery.success) {
+      return reply.status(400).send({
+        error: {
+          code: 'invalid_nearby_recommendations_query',
+          message: 'Nearby recommendations query did not match the expected shape.',
+        },
+      });
+    }
+
+    const cityView = repository.getCity(citySlug);
+
+    if (!cityView) {
+      return reply.status(404).send({
+        error: {
+          code: 'city_not_found',
+          message: 'City not found.',
+        },
+      });
+    }
+
+    const recommendations = rankNearbyPlaces({
+      category: parsedQuery.data.category,
+      minutesAvailable: parsedQuery.data.minutesAvailable,
+      origin: {
+        lat: parsedQuery.data.lat,
+        lng: parsedQuery.data.lng,
+      },
+      places: cityView.places,
+    }).slice(0, 5);
+
+    return {
+      recommendations,
     };
   });
 }
