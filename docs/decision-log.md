@@ -67,3 +67,9 @@ Retirement note:
 - Status: active
 - Decision: City, neighborhood, and place demo data now live in the shared layer and are consumed by API, web, and mobile instead of being duplicated per app.
 - Why: This reduces contract drift and gives Milestone 3 a single normalized catalog before external providers or databases are introduced.
+
+### D-011: Recommendation foundation is city-scoped first
+
+- Status: active
+- Decision: The first near-me recommendation slice is scoped to city discovery data plus a caller-provided origin, not full trip state or live device location orchestration.
+- Why: This keeps the ranking contract small and testable before mobile geolocation, trip persistence, and richer recommendation context are added.

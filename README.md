@@ -13,6 +13,7 @@ This repository is currently in a documentation-first bootstrap phase. The repo 
 - Baseline CI in [`.github/workflows/ci.yml`](.github/workflows/ci.yml)
 - Shared trip contracts, naive itinerary logic, and the first API slice for create/get/generate trip flows
 - Shared discovery catalog and API discovery routes for city overview and filtered places
+- Shared/API nearby recommendation foundation for city-scoped near-me suggestions
 - A real Next.js planner shell in `apps/web` for the first trip-to-itinerary experience
 - A real Expo trip shell in `apps/mobile` for the same naive trip-to-itinerary experience
 - Agent onboarding and workflow rules in [`AGENTS.md`](AGENTS.md)
@@ -26,7 +27,7 @@ This repository is currently in a documentation-first bootstrap phase. The repo 
 - No real product runtime yet
 - No advanced in-trip mobile experience yet
 - No persistent storage yet
-- No near-me ranking flow, social layer, or persistent storage yet
+- No dedicated near-me UI flow, social layer, or persistent storage yet
 
 Treat those gaps as known bootstrap work, not missing context.
 
@@ -90,6 +91,6 @@ The target backend is a layered architecture: interface -> application/domain se
 
 ## Current Next Step
 
-The next recommended work is the next layer after the discovery foundation: add persistent trip storage, replace remaining demo-only planner view shaping with shared or API-backed view builders, and start the near-me recommendation flow.
+The next recommended work is persistent trip storage plus a dedicated near-me user flow on top of the new recommendation foundation.
 
 Use [`docs/roadmap.md`](docs/roadmap.md) and [`docs/implementation-status.md`](docs/implementation-status.md) as the operational source of truth for that work.

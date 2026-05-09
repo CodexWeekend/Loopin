@@ -116,6 +116,13 @@ export const cityPlacesQuerySchema = z.object({
   pageSize: z.coerce.number().int().min(1).max(50).optional().default(20),
 });
 
+export const nearbyRecommendationsQuerySchema = z.object({
+  category: z.enum(placeCategories).optional(),
+  lat: z.coerce.number(),
+  lng: z.coerce.number(),
+  minutesAvailable: z.coerce.number().int().min(1),
+});
+
 export const cityOverviewSchema = z.object({
   city: discoveryCitySchema,
   hiddenGemCount: z.number().int().nonnegative(),
