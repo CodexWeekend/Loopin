@@ -1,5 +1,14 @@
 import { estimateTravelMinutes } from '@loopin/geo';
-import type { CreateTripInput, Itinerary, Place, Trip } from '@loopin/shared';
+import type {
+  CityOverview,
+  CityPlacesQuery,
+  CreateTripInput,
+  DiscoveryCity,
+  DiscoveryNeighborhood,
+  Itinerary,
+  Place,
+  Trip,
+} from '@loopin/shared';
 
 export type PlanningStage = 'bootstrap' | 'vertical-slice' | 'feature-complete';
 
@@ -58,6 +67,61 @@ export function createInitialItinerary({
   };
 }
 
+export function buildCityOverview({
+  city,
+  neighborhoods,
+  places,
+}: {
+  city: DiscoveryCity;
+  neighborhoods: DiscoveryNeighborhood[];
+  places: Array<Pick<Place, 'hiddennessLabel'>>;
+}): CityOverview {
+  return {
+    city,
+    hiddenGemCount: places.filter((place) => place.hiddennessLabel === 'Hidden').length,
+    neighborhoods: neighborhoods.map((neighborhood) => ({
+      budgetScore: neighborhood.budgetScore,
+      name: neighborhood.name,
+      slug: neighborhood.slug,
+      strengths: neighborhood.strengthTags,
+      summary: neighborhood.summary,
+      walkabilityScore: neighborhood.walkabilityScore,
+    })),
+  };
+}
+
+export function filterCityPlaces({
+  filters,
+  places,
+}: {
+  filters: CityPlacesQuery;
+  places: Place[];
+}): Place[] {
+  return places.filter((place) => {
+    if (filters.category && place.category !== filters.category) {
+      return false;
+    }
+
+    if (filters.hiddenness) {
+      const normalizedHiddenness = place.hiddennessLabel.toLowerCase();
+
+      if (normalizedHiddenness !== filters.hiddenness) {
+        return false;
+      }
+    }
+
+    if (filters.budget) {
+      const maxCostLevel = budgetToMaxCostLevel(filters.budget);
+
+      if (place.costLevel > maxCostLevel) {
+        return false;
+      }
+    }
+
+    return true;
+  });
+}
+
 function enumerateTripDates(startDate: string, endDate: string): string[] {
   const current = new Date(`${startDate}T00:00:00.000Z`);
   const end = new Date(`${endDate}T00:00:00.000Z`);
@@ -81,4 +145,16 @@ function estimateTravelMinutesForDay(
   }
 
   return totalMinutes;
+}
+
+function budgetToMaxCostLevel(budget: CityPlacesQuery['budget']): number {
+  switch (budget) {
+    case 'low':
+      return 1;
+    case 'medium':
+      return 2;
+    case 'high':
+    default:
+      return 3;
+  }
 }

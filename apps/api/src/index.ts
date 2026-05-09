@@ -1,57 +1,15 @@
 import Fastify from 'fastify';
 
 import { createInitialItinerary, createTripRecord } from '@loopin/core';
-import { createTripInputSchema, type Place, type Trip } from '@loopin/shared';
+import { createTripInputSchema, getCityDiscoveryView, type Trip } from '@loopin/shared';
+
+import { registerDiscoveryRoutes } from './modules/discovery/routes';
 
 export const apiWorkspace = {
   milestone: 'vertical-slice',
   name: '@loopin/api',
   purpose: 'backend service foundation for trip creation and itinerary generation',
 } as const;
-
-const seedPlacesByCity: Record<string, Place[]> = {
-  tokyo: [
-    {
-      category: 'food',
-      citySlug: 'tokyo',
-      costLevel: 2,
-      hiddennessLabel: 'Balanced',
-      hiddennessScore: 0.5,
-      id: 'tokyo-tsukiji',
-      lat: 35.6655,
-      lng: 139.7708,
-      name: 'Tsukiji Outer Market',
-      popularityScore: 0.9,
-      visitDurationMinutes: 90,
-    },
-    {
-      category: 'landmark',
-      citySlug: 'tokyo',
-      costLevel: 1,
-      hiddennessLabel: 'Touristy',
-      hiddennessScore: 0.2,
-      id: 'tokyo-sensoji',
-      lat: 35.7148,
-      lng: 139.7967,
-      name: 'Senso-ji',
-      popularityScore: 0.98,
-      visitDurationMinutes: 120,
-    },
-    {
-      category: 'park',
-      citySlug: 'tokyo',
-      costLevel: 1,
-      hiddennessLabel: 'Balanced',
-      hiddennessScore: 0.45,
-      id: 'tokyo-shinjuku-gyoen',
-      lat: 35.6852,
-      lng: 139.7101,
-      name: 'Shinjuku Gyoen',
-      popularityScore: 0.82,
-      visitDurationMinutes: 90,
-    },
-  ],
-};
 
 export function createApp() {
   const app = Fastify();
@@ -61,6 +19,8 @@ export function createApp() {
   app.get('/api/v1/health', async () => ({
     status: 'ok',
   }));
+
+  registerDiscoveryRoutes(app);
 
   app.post('/api/v1/trips', async (request, reply) => {
     const parsed = createTripInputSchema.safeParse(request.body);
@@ -110,7 +70,7 @@ export function createApp() {
       });
     }
 
-    const places = seedPlacesByCity[trip.citySlug] ?? [];
+    const places = getCityDiscoveryView(trip.citySlug)?.places ?? [];
 
     const itinerary = createInitialItinerary({
       places,

@@ -20,7 +20,10 @@
 - The repo now includes the first Milestone 2 mobile slice:
   - a real Expo trip shell with summary, day sections, and a stop detail sheet
   - interval verification through typed client tests plus workspace lint/typecheck
-- The repo does not yet include persistent data storage, discovery ingestion, or social features.
+- The repo now includes the first Milestone 3 foundation slice:
+  - shared city, neighborhood, and place discovery data
+  - API routes for city overview and filtered city places
+- The repo does not yet include persistent data storage, provider-backed discovery ingestion, near-me ranking, or social features.
 
 ## Completed
 
@@ -98,6 +101,20 @@
   Why: This environment can reliably verify the mobile state boundary and the Expo TS surface even without a simulator session.
   Evidence: `apps/mobile/tests/app.test.tsx`
 
+### 2026-05-09: Discovery foundation
+
+- What: Added shared city, neighborhood, and place discovery contracts plus a normalized demo catalog.
+  Why: API, web, and mobile needed one source of truth for discovery data before provider ingestion and persistence work begins.
+  Evidence: `packages/shared/src/index.ts`, `packages/shared/tests/discovery-schemas.test.ts`
+
+- What: Added core discovery helpers for city overview generation and place filtering.
+  Why: The API needed deterministic discovery behavior without pushing filter logic into route handlers or UI code.
+  Evidence: `packages/core/src/index.ts`, `packages/core/tests/discovery.test.ts`
+
+- What: Added discovery API routes for city overview and filtered places, and switched existing shells to the shared discovery catalog.
+  Why: The product now has a reusable discovery baseline across API, web, and mobile instead of duplicated local seed data.
+  Evidence: `apps/api/src/modules/discovery/`, `apps/api/tests/discovery-routes.test.ts`, `apps/web/src/features/trip-planner/lib/get-trip-planner-view.ts`, `apps/mobile/src/features/trip-planner/api/trip-planner-client.ts`
+
 ## Why It Was Done
 
 - Portability: the project should not depend on `C:\Users\maiqu\Downloads\plantxt.txt` or any other machine-local file.
@@ -108,16 +125,17 @@
 ## Open Gaps
 
 - No persistent trip storage yet
-- No discovery ingestion beyond seeded places yet
-- No discovery, near-me, social, or offline features yet
+- No provider-backed discovery ingestion yet
+- No near-me recommendation flow yet
+- No social or offline trip-card features yet
 
 ## Next Recommended Task
 
 Implement Milestone 2 from `docs/roadmap.md`:
 
-1. Keep the shared planner contracts aligned between API, web, and mobile while reducing duplicated local seed logic.
-2. Add persistent trip storage and move seeded place data behind a shared repository boundary.
-3. Start Milestone 3 discovery work and Milestone 4 near-me work from the new shared foundations.
+1. Add persistent trip storage and move trip state out of the in-memory API map.
+2. Replace remaining demo-only planner view shaping with shared or API-backed view builders where it materially reduces drift.
+3. Start the near-me recommendation flow on top of the shared discovery catalog and itinerary data.
 4. Keep verification interval-based and keep the status ledger current as the product expands.
 
 ## Blocked/Needs Decision

@@ -1,51 +1,7 @@
 import { createInitialItinerary, createTripRecord } from '@loopin/core';
-import type { CreateTripInput, Place, Trip } from '@loopin/shared';
+import { getCityDiscoveryView, type CreateTripInput, type Trip } from '@loopin/shared';
 
 const apiBaseUrl = process.env.EXPO_PUBLIC_API_BASE_URL;
-
-const demoPlacesByCity: Record<string, Place[]> = {
-  tokyo: [
-    {
-      category: 'landmark',
-      citySlug: 'tokyo',
-      costLevel: 1,
-      hiddennessLabel: 'Hidden',
-      hiddennessScore: 0.72,
-      id: 'tokyo-meiji-jingu',
-      lat: 35.6764,
-      lng: 139.6993,
-      name: 'Meiji Jingu Shrine',
-      popularityScore: 0.83,
-      visitDurationMinutes: 90,
-    },
-    {
-      category: 'food',
-      citySlug: 'tokyo',
-      costLevel: 1,
-      hiddennessLabel: 'Balanced',
-      hiddennessScore: 0.46,
-      id: 'tokyo-onibus',
-      lat: 35.6443,
-      lng: 139.6985,
-      name: 'ONIBUS Coffee Nakameguro',
-      popularityScore: 0.7,
-      visitDurationMinutes: 45,
-    },
-    {
-      category: 'park',
-      citySlug: 'tokyo',
-      costLevel: 1,
-      hiddennessLabel: 'Hidden',
-      hiddennessScore: 0.66,
-      id: 'tokyo-shinjuku-gyoen',
-      lat: 35.6852,
-      lng: 139.7101,
-      name: 'Shinjuku Gyoen National Garden',
-      popularityScore: 0.79,
-      visitDurationMinutes: 90,
-    },
-  ],
-};
 
 export type MobilePlannerState = {
   itinerary: ReturnType<typeof createInitialItinerary>;
@@ -83,7 +39,7 @@ export async function generateItinerary(trip: Trip): Promise<MobilePlannerState>
 
   return {
     itinerary: createInitialItinerary({
-      places: demoPlacesByCity[trip.citySlug] ?? demoPlacesByCity.tokyo,
+      places: getCityDiscoveryView(trip.citySlug)?.places ?? getCityDiscoveryView('tokyo')?.places ?? [],
       trip,
     }),
     trip,
