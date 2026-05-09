@@ -20,8 +20,8 @@ export interface PlacePresenceSummary {
 export interface LoopinAppState {
   cities: City[];
   connections: Connection[];
-  currentTrip: Trip;
-  currentUser: User;
+  currentTrip: Trip | null;
+  currentUser: User | null;
   dishes: Dish[];
   nearbySuggestions: NearMeSuggestion[];
   placePresence: PlacePresenceSummary[];
@@ -112,7 +112,11 @@ export async function fetchLoopinAppState(tripId?: string): Promise<LoopinAppSta
   });
 
   if (!response.ok) {
-    throw new Error('Failed to load Loopin app state');
+    const payload = (await response.json().catch(() => null)) as
+      | { error?: { message?: string } }
+      | null;
+
+    throw new Error(payload?.error?.message ?? 'Failed to load Loopin app state');
   }
 
   const payload = (await response.json()) as { state: LoopinAppState };
@@ -129,7 +133,11 @@ export async function runLoopinAction(action: LoopinAction): Promise<LoopinAppSt
   });
 
   if (!response.ok) {
-    throw new Error('Failed to apply Loopin action');
+    const payload = (await response.json().catch(() => null)) as
+      | { error?: { message?: string } }
+      | null;
+
+    throw new Error(payload?.error?.message ?? 'Failed to apply Loopin action');
   }
 
   const payload = (await response.json()) as { state: LoopinAppState };

@@ -477,7 +477,7 @@ export default function LoopinApp({
     return <LoadingScreen label="Loading your trips..." />
   }
 
-  if (!appState || !currentTrip || !currentUser) {
+  if (!appState || !currentUser) {
     return (
       <div className="flex h-screen items-center justify-center bg-background p-6">
         <div className="max-w-sm rounded-2xl border bg-card p-6 text-center">
@@ -492,6 +492,43 @@ export default function LoopinApp({
             Retry
           </button>
         </div>
+      </div>
+    )
+  }
+
+  if (!currentTrip) {
+    return (
+      <div className="flex h-screen bg-background">
+        <Sidebar
+          activeTab={activeTab}
+          onTabChange={(tab) => setActiveTab(tab as ActiveTab)}
+        />
+        <div className="flex flex-1 items-center justify-center p-6">
+          <div className="max-w-md rounded-3xl border bg-card p-8 text-center shadow-sm">
+            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-primary text-primary-foreground">
+              <Compass className="h-8 w-8" />
+            </div>
+            <h1 className="mt-5 text-2xl font-semibold text-foreground">Plan your first trip</h1>
+            <p className="mt-2 text-sm text-muted-foreground">
+              Your account is ready. Start a trip to unlock itinerary planning, nearby suggestions,
+              and social discovery.
+            </p>
+            <button
+              type="button"
+              className="mt-6 inline-flex items-center justify-center rounded-xl bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:opacity-90"
+              onClick={() => setIsTripWizardOpen(true)}
+            >
+              Create a trip
+            </button>
+          </div>
+        </div>
+
+        <TripWizard
+          cities={appState.cities}
+          open={isTripWizardOpen}
+          onClose={() => setIsTripWizardOpen(false)}
+          onComplete={(trip) => void handleTripCreate(trip)}
+        />
       </div>
     )
   }

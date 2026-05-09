@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto';
-import { existsSync, mkdirSync } from 'node:fs';
+import { mkdirSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { DatabaseSync } from 'node:sqlite';
 
@@ -213,13 +213,10 @@ function resolveDatabasePath() {
   const override = process.env.LOOPIN_LOCAL_DB_PATH?.trim();
 
   if (override) {
-    return resolve(process.cwd(), override);
+    return resolve(/* turbopackIgnore: true */ process.cwd(), override);
   }
 
-  const appScopedDatabasePath = resolve(process.cwd(), 'data', 'loopin.sqlite');
-  const repoScopedDatabasePath = resolve(process.cwd(), 'apps', 'web', 'data', 'loopin.sqlite');
-
-  return existsSync(resolve(process.cwd(), 'app')) ? appScopedDatabasePath : repoScopedDatabasePath;
+  return resolve(process.cwd(), 'data', 'loopin.sqlite');
 }
 
 function getDatabase() {
