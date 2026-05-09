@@ -42,9 +42,13 @@ Use this file for sticky defaults that future contributors should not silently r
 
 ### D-007: Pre-dev branch workflow
 
-- Status: active
+- Status: retired
 - Decision: Until a real `dev` branch exists, contributors should create `feat/*` or `fix/*` branches from `main` and target pull requests back to `main`.
-- Why: The repo cannot forbid direct work on `main` without also stating the temporary safe path.
+- Why: The repo could not forbid direct work on `main` without also stating the temporary safe path.
+
+Retirement note:
+
+- `dev` now exists. Active feature work should branch from `dev` under the current `AGENTS.md` rules.
 
 ### D-008: Canonical command names with Windows fallback
 

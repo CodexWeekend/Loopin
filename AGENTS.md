@@ -68,16 +68,16 @@ Intended long-term branch model:
 
 Current reality:
 
-- As of the bootstrap milestone, the repo still only has `main` in the shared remote history.
-- Creating `dev` and normalizing the branch workflow is an explicit follow-up task.
+- `dev` now exists as the integration branch.
+- Feature work should branch from `dev` using `feat/*` or `fix/*`.
+- `main` should receive less frequent, verified integrations from `dev`.
 
 Rules:
 
 - Never commit directly to `main`.
 - Prefer creating a short-lived working branch for any implementation task.
-- Until `dev` exists, create `feat/*` or `fix/*` branches from `main` and target pull requests back to `main`.
-- Once `dev` exists, branch from `dev`, not `main`.
-- Once `dev` exists, target routine feature and fix pull requests to `dev` unless a human explicitly says otherwise.
+- Branch from `dev`, not `main`, unless a human explicitly directs otherwise.
+- Target routine feature and fix pull requests to `dev` unless a human explicitly says otherwise.
 - Do not use `git commit --no-verify`.
 - Do not rewrite history unless a human explicitly asks for it.
 
@@ -91,9 +91,8 @@ These commands are the intended project-standard entry points:
 
 Current reality:
 
-- These scripts are planned but not implemented yet.
-- If you create them, make them the single documented standard and update every doc that references them.
-- Until then, do not introduce conflicting pseudo-standards in wrapper files or chat-only instructions.
+- These scripts exist and define the canonical verification workflow.
+- If you change them, update every doc that references them in the same change.
 - On Windows, assume Git Bash or WSL for the canonical `.sh` entry points until equivalent repo-native wrappers are added.
 - If Windows-friendly wrappers are introduced later, they should delegate to the same workflow and remain secondary to the canonical command contract.
 

@@ -7,6 +7,10 @@ This repository is currently in a documentation-first bootstrap phase. The repo 
 ## What Exists Today
 
 - Canonical product and architecture docs in [`docs/`](docs/)
+- A real `dev` integration branch plus feature-branch workflow
+- Monorepo scaffolding in `apps/` and `packages/`
+- Baseline shell scripts: [`init.sh`](init.sh), [`sync-dev.sh`](sync-dev.sh), [`test-all.sh`](test-all.sh)
+- Baseline CI in [`.github/workflows/ci.yml`](.github/workflows/ci.yml)
 - Agent onboarding and workflow rules in [`AGENTS.md`](AGENTS.md)
 - Thin compatibility wrappers for Claude and Gemini in [`CLAUDE.md`](CLAUDE.md) and [`GEMINI.md`](GEMINI.md)
 - A current-state ledger in [`docs/implementation-status.md`](docs/implementation-status.md)
@@ -15,11 +19,10 @@ This repository is currently in a documentation-first bootstrap phase. The repo 
 
 ## What Does Not Exist Yet
 
-- No `apps/` or `packages/` scaffolding yet
-- No API, web app, or mobile app yet
-- No `init.sh`, `sync-dev.sh`, or `test-all.sh` scripts yet
-- No CI workflow yet
-- No `dev` integration branch yet
+- No real product runtime yet
+- No trip planner UI or mobile in-trip experience yet
+- No backend API routes or persistence yet
+- No vertical slice from trip creation to itinerary rendering yet
 
 Treat those gaps as known bootstrap work, not missing context.
 
@@ -51,7 +54,7 @@ If you are a new contributor or coding agent, read these files in order:
 
 ## Quickstart Intent
 
-This repository is not runnable yet. The current milestone is about making the project portable, self-describing, and ready for implementation.
+This repository now has a working scaffold and baseline verification workflow, but it does not yet ship the Loopin product flows.
 
 The standardized command contract for the future repo is:
 
@@ -83,6 +86,6 @@ The target backend is a layered architecture: interface -> application/domain se
 
 ## Current Next Step
 
-The next recommended milestone is Milestone 1 only: scaffold the monorepo structure, add the standard scripts, and set up CI and baseline tooling. The vertical slice comes after that in Milestone 2.
+The next recommended milestone is Milestone 2: implement the first vertical slice across shared domain logic, API, web, and mobile. That slice should cover simple trip creation, naive itinerary generation, and rendering the result in the app shells.
 
 Use [`docs/roadmap.md`](docs/roadmap.md) and [`docs/implementation-status.md`](docs/implementation-status.md) as the operational source of truth for that work.
