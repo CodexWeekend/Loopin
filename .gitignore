@@ -1,0 +1,22 @@
+# Environment files
+.env
+.env.*
+!.env.example
+
+# Node and build outputs
+node_modules/
+.pnpm-store/
+.next/
+dist/
+coverage/
+*.tsbuildinfo
+
+# Expo / React Native
+.expo/
+
+# Logs
+*.log
+
+# OS files
+.DS_Store
+Thumbs.db

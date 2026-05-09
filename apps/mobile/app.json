@@ -1,0 +1,9 @@
+{
+  "expo": {
+    "name": "Loopin",
+    "slug": "loopin-mobile",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light"
+  }
+}
