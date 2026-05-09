@@ -17,6 +17,11 @@ coverage/
 # Logs
 *.log
 
+# Local databases
+*.db
+*.db-journal
+*.sqlite
+
 # OS files
 .DS_Store
 Thumbs.db
