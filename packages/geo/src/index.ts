@@ -18,6 +18,12 @@ export function haversineDistanceKm(origin: Coordinate, target: Coordinate): num
   return 2 * EARTH_RADIUS_KM * Math.asin(Math.sqrt(a));
 }
 
+export function estimateTravelMinutes(origin: Coordinate, target: Coordinate, averageKmh = 4.5): number {
+  const distanceKm = haversineDistanceKm(origin, target);
+
+  return Math.max(0, Math.round((distanceKm / averageKmh) * 60));
+}
+
 function toRadians(value: number): number {
   return (value * Math.PI) / 180;
 }
