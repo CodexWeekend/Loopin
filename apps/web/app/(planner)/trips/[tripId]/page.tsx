@@ -1,6 +1,21 @@
-import { buildPlannerPreview } from '../../../../src/features/trip-planner/lib/get-trip-planner-view';
-import { TripPlannerShell } from '../../../../src/features/trip-planner/components/trip-planner-shell';
+import { redirect } from 'next/navigation';
+import { getServerSession } from 'next-auth';
 
-export default function TripPlannerPage() {
-  return <TripPlannerShell initialPreview={buildPlannerPreview()} />;
+import { authOptions } from '@/auth';
+import LoopinApp from '@/components/loopin/loopin-app';
+
+export default async function TripPlannerPage({
+  params,
+}: {
+  params: Promise<{ tripId: string }>
+}) {
+  const session = await getServerSession(authOptions);
+
+  if (!session?.user) {
+    redirect('/auth/login');
+  }
+
+  const { tripId } = await params;
+
+  return <LoopinApp initialTripId={tripId} />;
 }

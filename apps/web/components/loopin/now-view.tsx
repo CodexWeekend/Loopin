@@ -1,11 +1,10 @@
 "use client"
 
-import { useState } from "react"
+import React, { useState } from "react"
 import Image from "next/image"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { ScrollArea } from "@/components/ui/scroll-area"
-import { cn } from "@/lib/utils"
 import {
   MapPin,
   Clock,
@@ -20,13 +19,18 @@ import {
   Star,
   Zap,
   SkipForward,
-  ArrowRight,
 } from "lucide-react"
-import type { Place, DayStop, QuickAction, NearMeSuggestion } from "@/lib/types"
-import { places, quickActions, nearMeSuggestions, sampleTrip } from "@/lib/sample-data"
+import type { Place, DayPlan, DayStop, QuickAction, NearMeSuggestion } from "@/lib/types"
+import { nearMeSuggestions, quickActions, sampleTrip } from "@/lib/sample-data"
 
 interface NowViewProps {
   currentLocation?: { lat: number; lng: number }
+  cityName?: string
+  currentNeighborhoodLabel?: string
+  currentDay?: DayPlan
+  currentStopIndex?: number
+  suggestions?: NearMeSuggestion[]
+  quickActions?: QuickAction[]
   onPlaceSelect?: (place: Place) => void
   onAddToDay?: (place: Place) => void
   onSkipStop?: (stopId: string) => void
@@ -34,29 +38,40 @@ interface NowViewProps {
 
 export function NowView({
   currentLocation,
+  cityName,
+  currentNeighborhoodLabel,
+  currentDay: providedCurrentDay,
+  currentStopIndex = 2,
+  suggestions: providedSuggestions,
+  quickActions: providedQuickActions,
   onPlaceSelect,
   onAddToDay,
   onSkipStop,
 }: NowViewProps) {
   const [activeQuickAction, setActiveQuickAction] = useState<string | null>(null)
 
-  // Simulated current day plan
-  const currentDay = sampleTrip.days[0]
-  const currentStopIndex = 2 // Simulating we're at stop 3
-  const currentStop = currentDay?.stops[currentStopIndex]
-  const nextStop = currentDay?.stops[currentStopIndex + 1]
-  const upcomingStops = currentDay?.stops.slice(currentStopIndex + 1) || []
+  const activeQuickActions = providedQuickActions ?? quickActions
+  const activeSuggestions = providedSuggestions ?? nearMeSuggestions
+  const currentDay = providedCurrentDay ?? sampleTrip.days[0]
+  const safeCurrentStopIndex = Math.min(
+    Math.max(currentStopIndex, 0),
+    Math.max((currentDay?.stops.length ?? 1) - 1, 0),
+  )
+  const currentStop = currentDay?.stops[safeCurrentStopIndex]
+  const nextStop = currentDay?.stops[safeCurrentStopIndex + 1]
+  const upcomingStops = currentDay?.stops.slice(safeCurrentStopIndex + 1) || []
+  const currentCityName = cityName ?? sampleTrip.destination.name
+  const activeLocationLabel =
+    currentNeighborhoodLabel ??
+    currentStop?.place.neighborhood ??
+    (currentLocation ? "Current area" : "Nearby")
 
-  // Filter suggestions based on quick action
   const filteredSuggestions = activeQuickAction
-    ? nearMeSuggestions.filter((s) => {
-        const action = quickActions.find((a) => a.id === activeQuickAction)
-        if (!action) return true
-        if (action.id === "hidden-gems") return s.place.hiddenness === "hidden"
-        if (action.id === "coffee-break") return s.place.category === "cafe"
-        return true
-      })
-    : nearMeSuggestions
+    ? filterSuggestionsForAction(
+        activeSuggestions,
+        activeQuickActions.find((action) => action.id === activeQuickAction),
+      )
+    : activeSuggestions
 
   return (
     <div className="flex h-full flex-col">
@@ -66,12 +81,12 @@ export function NowView({
           <div>
             <h1 className="text-xl font-semibold">Now</h1>
             <p className="text-sm text-muted-foreground">
-              Explore near you in {sampleTrip.destination.name}
+              Explore near you in {currentCityName}
             </p>
           </div>
           <div className="flex items-center gap-2 rounded-full bg-primary/10 px-3 py-1.5 text-sm">
             <MapPin className="h-4 w-4 text-primary" />
-            <span className="font-medium">Shinjuku</span>
+            <span className="font-medium">{activeLocationLabel}</span>
           </div>
         </div>
 
@@ -81,7 +96,7 @@ export function NowView({
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-sm font-bold text-primary-foreground">
-                  {currentStopIndex + 1}
+                  {safeCurrentStopIndex + 1}
                 </div>
                 <div>
                   <p className="text-sm font-medium">Currently at</p>
@@ -108,7 +123,7 @@ export function NowView({
           <div>
             <h2 className="mb-3 font-semibold">Quick Actions</h2>
             <div className="flex flex-wrap gap-2">
-              {quickActions.map((action) => {
+              {activeQuickActions.map((action) => {
                 const isActive = activeQuickAction === action.id
                 return (
                   <Button
@@ -118,11 +133,7 @@ export function NowView({
                     onClick={() => setActiveQuickAction(isActive ? null : action.id)}
                     className="gap-2"
                   >
-                    {action.id === "fill-hour" && <Clock className="h-4 w-4" />}
-                    {action.id === "rainy-day" && <CloudRain className="h-4 w-4" />}
-                    {action.id === "late-night" && <Moon className="h-4 w-4" />}
-                    {action.id === "coffee-break" && <Coffee className="h-4 w-4" />}
-                    {action.id === "hidden-gems" && <Sparkles className="h-4 w-4" />}
+                    {renderQuickActionIcon(action.id)}
                     {action.label}
                   </Button>
                 )
@@ -144,7 +155,7 @@ export function NowView({
                   <TodayStopCard
                     key={stop.id}
                     stop={stop}
-                    index={currentStopIndex + index + 2}
+                    index={safeCurrentStopIndex + index + 2}
                     onSkip={() => onSkipStop?.(stop.id)}
                   />
                 ))}
@@ -163,7 +174,7 @@ export function NowView({
             <div className="mb-3 flex items-center justify-between">
               <h2 className="font-semibold">
                 {activeQuickAction
-                  ? quickActions.find((a) => a.id === activeQuickAction)?.label
+                  ? activeQuickActions.find((action) => action.id === activeQuickAction)?.label
                   : "Near You"}
               </h2>
               <Button variant="ghost" size="sm" className="gap-1">
@@ -211,6 +222,48 @@ export function NowView({
   )
 }
 
+function filterSuggestionsForAction(
+  suggestions: NearMeSuggestion[],
+  action?: QuickAction,
+) {
+  if (!action) {
+    return suggestions
+  }
+
+  return suggestions.filter((suggestion) => {
+    const matchesCategory =
+      !action.filters.categories ||
+      action.filters.categories.includes(suggestion.place.category)
+    const matchesDistance =
+      !action.filters.maxDistance ||
+      suggestion.distance <= action.filters.maxDistance
+    const matchesDuration =
+      !action.filters.maxDuration ||
+      suggestion.place.typicalDuration <= action.filters.maxDuration
+    const matchesHiddenGem =
+      action.id !== "hidden-gems" || suggestion.place.hiddenness === "hidden"
+
+    return matchesCategory && matchesDistance && matchesDuration && matchesHiddenGem
+  })
+}
+
+function renderQuickActionIcon(actionId: QuickAction["id"]) {
+  switch (actionId) {
+    case "fill-hour":
+      return <Clock className="h-4 w-4" />
+    case "rainy-day":
+      return <CloudRain className="h-4 w-4" />
+    case "late-night":
+      return <Moon className="h-4 w-4" />
+    case "coffee-break":
+      return <Coffee className="h-4 w-4" />
+    case "hidden-gems":
+      return <Sparkles className="h-4 w-4" />
+    default:
+      return null
+  }
+}
+
 // ============ Sub-components ============
 
 interface TodayStopCardProps {
@@ -239,7 +292,7 @@ function TodayStopCard({ stop, index, onSkip }: TodayStopCardProps) {
           <span>{stop.startTime}</span>
           {stop.travelFromPrevious && stop.travelFromPrevious.duration > 0 && (
             <>
-              <span>•</span>
+              <span>-</span>
               <span>{stop.travelFromPrevious.duration}m away</span>
             </>
           )}

@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -11,30 +11,40 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { cn } from "@/lib/utils"
 import {
-  Link2,
   Copy,
   Check,
-  Mail,
   Globe,
   Lock,
   Users,
   UserPlus,
   Eye,
   Edit3,
-  Trash2,
   X,
   Download,
   Printer,
   FileText,
 } from "lucide-react"
-import type { Trip, Collaborator, User } from "@/lib/types"
-import { sampleUsers } from "@/lib/sample-data"
+import type { Collaborator, Trip, User } from "@/lib/types"
+
+type InviteRole = "editor" | "viewer"
 
 interface ShareDialogProps {
   open: boolean
   onClose: () => void
   trip: Trip
-  onInvite?: (email: string, role: "editor" | "viewer") => void
+  collaborators?: Collaborator[]
+  currentUserId?: string
+  inviteEmail?: string
+  inviteRole?: InviteRole
+  isPublic?: boolean
+  owner?: User | null
+  shareUrl?: string
+  onExportCalendar?: () => void
+  onExportOfflineTripCard?: () => void
+  onInvite?: (email: string, role: InviteRole) => void
+  onInviteEmailChange?: (email: string) => void
+  onInviteRoleChange?: (role: InviteRole) => void
+  onPrintItinerary?: () => void
   onRemoveCollaborator?: (userId: string) => void
   onUpdateVisibility?: (isPublic: boolean) => void
 }
@@ -43,37 +53,91 @@ export function ShareDialog({
   open,
   onClose,
   trip,
+  collaborators,
+  currentUserId,
+  inviteEmail,
+  inviteRole,
+  isPublic,
+  owner,
+  shareUrl,
+  onExportCalendar,
+  onExportOfflineTripCard,
   onInvite,
+  onInviteEmailChange,
+  onInviteRoleChange,
+  onPrintItinerary,
   onRemoveCollaborator,
   onUpdateVisibility,
 }: ShareDialogProps) {
   const [copied, setCopied] = useState(false)
-  const [email, setEmail] = useState("")
-  const [inviteRole, setInviteRole] = useState<"editor" | "viewer">("viewer")
-  const [isPublic, setIsPublic] = useState(trip.isPublic)
+  const [localInviteEmail, setLocalInviteEmail] = useState("")
+  const [localInviteRole, setLocalInviteRole] = useState<InviteRole>("viewer")
+  const [localIsPublic, setLocalIsPublic] = useState(isPublic ?? trip.isPublic)
 
-  const shareUrl = `https://loopin.app/trip/${trip.id}`
+  const collaboratorList = collaborators ?? trip.collaborators
+  const ownerUser = owner ?? collaboratorList.find((collaborator) => collaborator.role === "owner")?.user ?? null
+  const regularCollaborators = ownerUser
+    ? collaboratorList.filter((collaborator) => collaborator.user.id !== ownerUser.id)
+    : collaboratorList
+  const resolvedCurrentUserId = currentUserId ?? ownerUser?.id
+  const resolvedInviteEmail = inviteEmail ?? localInviteEmail
+  const resolvedInviteRole = inviteRole ?? localInviteRole
+  const resolvedIsPublic = isPublic ?? localIsPublic
+  const resolvedShareUrl = shareUrl ?? `/trips/${trip.id}`
+  const collaboratorCount = regularCollaborators.length + (ownerUser ? 1 : 0)
 
-  const handleCopy = async () => {
-    await navigator.clipboard.writeText(shareUrl)
+  useEffect(() => {
+    setLocalIsPublic(isPublic ?? trip.isPublic)
+  }, [isPublic, trip.isPublic])
+
+  useEffect(() => {
+    if (!open) {
+      setCopied(false)
+    }
+  }, [open])
+
+  function setInviteEmailValue(value: string) {
+    onInviteEmailChange?.(value)
+
+    if (inviteEmail === undefined) {
+      setLocalInviteEmail(value)
+    }
+  }
+
+  function setInviteRoleValue(value: InviteRole) {
+    onInviteRoleChange?.(value)
+
+    if (inviteRole === undefined) {
+      setLocalInviteRole(value)
+    }
+  }
+
+  async function handleCopy() {
+    await navigator.clipboard.writeText(resolvedShareUrl)
     setCopied(true)
     setTimeout(() => setCopied(false), 2000)
   }
 
-  const handleInvite = () => {
-    if (email) {
-      onInvite?.(email, inviteRole)
-      setEmail("")
+  function handleInvite() {
+    const normalizedEmail = resolvedInviteEmail.trim()
+    if (!normalizedEmail) {
+      return
     }
+
+    onInvite?.(normalizedEmail, resolvedInviteRole)
+    setInviteEmailValue("")
   }
 
-  const handleVisibilityChange = (checked: boolean) => {
-    setIsPublic(checked)
+  function handleVisibilityChange(checked: boolean) {
+    if (isPublic === undefined) {
+      setLocalIsPublic(checked)
+    }
+
     onUpdateVisibility?.(checked)
   }
 
   return (
-    <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
+    <Dialog open={open} onOpenChange={(nextOpen) => !nextOpen && onClose()}>
       <DialogContent className="max-w-lg">
         <DialogHeader>
           <DialogTitle>Share trip</DialogTitle>
@@ -95,37 +159,36 @@ export function ShareDialog({
             </TabsTrigger>
           </TabsList>
 
-          {/* Share Link Tab */}
           <TabsContent value="share" className="space-y-4 pt-4">
             <div className="flex items-center justify-between rounded-lg border p-4">
               <div className="flex items-center gap-3">
-                {isPublic ? (
+                {resolvedIsPublic ? (
                   <Globe className="h-5 w-5 text-primary" />
                 ) : (
                   <Lock className="h-5 w-5 text-muted-foreground" />
                 )}
                 <div>
                   <p className="font-medium">
-                    {isPublic ? "Public link" : "Private"}
+                    {resolvedIsPublic ? "Public link" : "Private"}
                   </p>
                   <p className="text-sm text-muted-foreground">
-                    {isPublic
+                    {resolvedIsPublic
                       ? "Anyone with the link can view"
                       : "Only invited collaborators can access"}
                   </p>
                 </div>
               </div>
               <Switch
-                checked={isPublic}
+                checked={resolvedIsPublic}
                 onCheckedChange={handleVisibilityChange}
               />
             </div>
 
-            {isPublic && (
+            {resolvedIsPublic ? (
               <div className="space-y-2">
                 <Label>Share link</Label>
                 <div className="flex gap-2">
-                  <Input value={shareUrl} readOnly className="bg-muted" />
+                  <Input value={resolvedShareUrl} readOnly className="bg-muted" />
                   <Button onClick={handleCopy} className="gap-2 whitespace-nowrap">
                     {copied ? (
                       <>
@@ -141,42 +204,42 @@ export function ShareDialog({
                   </Button>
                 </div>
               </div>
-            )}
+            ) : null}
           </TabsContent>
 
-          {/* Collaborate Tab */}
           <TabsContent value="collaborate" className="space-y-4 pt-4">
-            {/* Invite form */}
             <div className="space-y-3">
               <Label>Invite by email</Label>
               <div className="flex gap-2">
                 <Input
                   type="email"
                   placeholder="Enter email address"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  value={resolvedInviteEmail}
+                  onChange={(event) => setInviteEmailValue(event.target.value)}
                   className="flex-1"
                 />
                 <div className="flex gap-1 rounded-md border">
                   <button
+                    type="button"
                     className={cn(
                       "rounded-l-md px-3 py-2 text-sm transition-colors",
-                      inviteRole === "viewer"
+                      resolvedInviteRole === "viewer"
                         ? "bg-muted font-medium"
                         : "hover:bg-muted/50"
                     )}
-                    onClick={() => setInviteRole("viewer")}
+                    onClick={() => setInviteRoleValue("viewer")}
                   >
                     <Eye className="h-4 w-4" />
                   </button>
                   <button
+                    type="button"
                     className={cn(
                       "rounded-r-md px-3 py-2 text-sm transition-colors",
-                      inviteRole === "editor"
+                      resolvedInviteRole === "editor"
                         ? "bg-muted font-medium"
                         : "hover:bg-muted/50"
                     )}
-                    onClick={() => setInviteRole("editor")}
+                    onClick={() => setInviteRoleValue("editor")}
                   >
                     <Edit3 className="h-4 w-4" />
                   </button>
@@ -191,63 +254,70 @@ export function ShareDialog({
               </p>
             </div>
 
-            {/* Current collaborators */}
             <div className="space-y-3">
               <div className="flex items-center justify-between">
                 <Label>Collaborators</Label>
                 <span className="text-sm text-muted-foreground">
-                  {trip.collaborators.length + 1} people
+                  {collaboratorCount} people
                 </span>
               </div>
               <div className="space-y-2">
-                {/* Owner */}
-                <CollaboratorRow
-                  user={sampleUsers[0]}
-                  role="owner"
-                  isOwner
-                />
-                {/* Other collaborators */}
-                {trip.collaborators
-                  .filter((c) => c.role !== "owner")
-                  .map((collab) => (
-                    <CollaboratorRow
-                      key={collab.userId}
-                      user={collab.user}
-                      role={collab.role}
-                      onRemove={() => onRemoveCollaborator?.(collab.userId)}
-                    />
-                  ))}
-                {/* Placeholder if no collaborators */}
-                {trip.collaborators.length === 1 && (
+                {ownerUser ? (
+                  <CollaboratorRow
+                    user={ownerUser}
+                    role="owner"
+                    isOwner={ownerUser.id === resolvedCurrentUserId}
+                  />
+                ) : null}
+                {regularCollaborators.map((collaborator) => (
+                  <CollaboratorRow
+                    key={collaborator.userId}
+                    user={collaborator.user}
+                    role={collaborator.role}
+                    onRemove={() => onRemoveCollaborator?.(collaborator.userId)}
+                  />
+                ))}
+                {regularCollaborators.length === 0 ? (
                   <div className="rounded-lg border border-dashed p-4 text-center">
                     <Users className="mx-auto h-8 w-8 text-muted-foreground/50" />
                     <p className="mt-2 text-sm text-muted-foreground">
                       No collaborators yet. Invite someone to plan together!
                     </p>
                   </div>
-                )}
+                ) : null}
               </div>
             </div>
           </TabsContent>
 
-          {/* Export Tab */}
           <TabsContent value="export" className="space-y-4 pt-4">
             <p className="text-sm text-muted-foreground">
               Export your trip for offline access or printing
             </p>
             <div className="grid gap-3">
-              <Button variant="outline" className="justify-start gap-3">
+              <Button
+                variant="outline"
+                className="justify-start gap-3"
+                onClick={onExportOfflineTripCard}
+              >
                 <Download className="h-4 w-4" />
                 Download offline trip card
                 <Badge variant="secondary" className="ml-auto">
                   PDF
                 </Badge>
               </Button>
-              <Button variant="outline" className="justify-start gap-3">
+              <Button
+                variant="outline"
+                className="justify-start gap-3"
+                onClick={onPrintItinerary}
+              >
                 <Printer className="h-4 w-4" />
                 Print itinerary
               </Button>
-              <Button variant="outline" className="justify-start gap-3">
+              <Button
+                variant="outline"
+                className="justify-start gap-3"
+                onClick={onExportCalendar}
+              >
                 <FileText className="h-4 w-4" />
                 Export to calendar
                 <Badge variant="secondary" className="ml-auto">
@@ -270,11 +340,9 @@ export function ShareDialog({
   )
 }
 
-// ============ Sub-components ============
-
 interface CollaboratorRowProps {
   user: User
-  role: "owner" | "editor" | "viewer"
+  role: Collaborator["role"]
   isOwner?: boolean
   onRemove?: () => void
 }
@@ -290,9 +358,9 @@ function CollaboratorRow({ user, role, isOwner, onRemove }: CollaboratorRowProps
         <div>
           <p className="text-sm font-medium">
             {user.name}
-            {isOwner && (
+            {isOwner ? (
               <span className="ml-2 text-xs text-muted-foreground">(you)</span>
-            )}
+            ) : null}
           </p>
           <p className="text-xs text-muted-foreground">{user.email}</p>
         </div>
@@ -301,11 +369,11 @@ function CollaboratorRow({ user, role, isOwner, onRemove }: CollaboratorRowProps
         <Badge variant={role === "owner" ? "default" : "secondary"} className="capitalize">
           {role}
         </Badge>
-        {!isOwner && onRemove && (
+        {!isOwner && onRemove ? (
           <Button variant="ghost" size="icon" className="h-8 w-8" onClick={onRemove}>
             <X className="h-4 w-4" />
           </Button>
-        )}
+        ) : null}
       </div>
     </div>
   )

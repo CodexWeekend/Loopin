@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import type { ReactNode } from "react"
 import Image from "next/image"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -11,14 +12,10 @@ import { Separator } from "@/components/ui/separator"
 import { cn } from "@/lib/utils"
 import { format, parseISO } from "date-fns"
 import {
-  Settings,
   Edit2,
   MapPin,
   Calendar,
-  Heart,
   Globe,
-  Lock,
-  MessageCircle,
   Bell,
   Moon,
   HelpCircle,
@@ -27,14 +24,24 @@ import {
   Sparkles,
   Plus,
 } from "lucide-react"
-import type { User, Trip, InterestType } from "@/lib/types"
-import { sampleTrip, sampleUsers } from "@/lib/sample-data"
+import type { InterestType, Trip, User } from "@/lib/types"
+import { useTheme } from "next-themes"
 
 interface ProfileViewProps {
   user: User
-  trips?: Trip[]
+  darkModeEnabled?: boolean
+  gemsFoundCount?: number
+  notificationsEnabled?: boolean
+  onAddInterest?: () => void
+  onCreateTrip?: () => void
+  onDarkModeChange?: (enabled: boolean) => void
   onEditProfile?: () => void
+  onNotificationsChange?: (enabled: boolean) => void
+  onOpenHelpSupport?: () => void
+  onOpenVisibilitySettings?: () => void
   onLogout?: () => void
+  onSelectTrip?: (tripId: string) => void
+  trips?: Trip[]
 }
 
 const INTEREST_COLORS: Record<InterestType, string> = {
@@ -49,16 +56,51 @@ const INTEREST_COLORS: Record<InterestType, string> = {
   photography: "bg-cyan-100 text-cyan-700 dark:bg-cyan-900/30 dark:text-cyan-400",
 }
 
-export function ProfileView({ user, trips = [sampleTrip], onEditProfile, onLogout }: ProfileViewProps) {
-  const [darkMode, setDarkMode] = useState(false)
+export function ProfileView({
+  user,
+  darkModeEnabled,
+  gemsFoundCount,
+  notificationsEnabled,
+  onAddInterest,
+  onCreateTrip,
+  onDarkModeChange,
+  onEditProfile,
+  onNotificationsChange,
+  onOpenHelpSupport,
+  onOpenVisibilitySettings,
+  onLogout,
+  onSelectTrip,
+  trips = [],
+}: ProfileViewProps) {
+  const { resolvedTheme, setTheme } = useTheme()
   const [notifications, setNotifications] = useState(true)
 
-  const pastTrips = trips.filter((t) => t.status === "completed")
-  const upcomingTrips = trips.filter((t) => t.status !== "completed")
+  const pastTrips = trips.filter((trip) => trip.status === "completed")
+  const upcomingTrips = trips.filter((trip) => trip.status !== "completed")
+  const resolvedDarkMode = darkModeEnabled ?? resolvedTheme === "dark"
+  const resolvedNotifications = notificationsEnabled ?? notifications
+  const resolvedGemsFoundCount = gemsFoundCount
+    ?? trips.flatMap((trip) => trip.days.flatMap((day) => day.stops))
+      .filter((stop) => stop.place.hiddenness === "hidden").length
+
+  function handleNotificationChange(nextValue: boolean) {
+    if (notificationsEnabled === undefined) {
+      setNotifications(nextValue)
+    }
+
+    onNotificationsChange?.(nextValue)
+  }
+
+  function handleDarkModeChange(nextValue: boolean) {
+    if (darkModeEnabled === undefined) {
+      setTheme(nextValue ? "dark" : "light")
+    }
+
+    onDarkModeChange?.(nextValue)
+  }
 
   return (
     <div className="flex h-full flex-col">
-      {/* Header */}
       <div className="relative h-32 bg-gradient-to-br from-primary/80 to-primary">
         <Button
           variant="ghost"
@@ -70,7 +112,6 @@ export function ProfileView({ user, trips = [sampleTrip], onEditProfile, onLogou
         </Button>
       </div>
 
-      {/* Profile info */}
       <div className="relative px-6 pb-4">
         <Avatar className="-mt-12 h-24 w-24 border-4 border-background">
           <AvatarImage src={user.avatar} />
@@ -88,13 +129,13 @@ export function ProfileView({ user, trips = [sampleTrip], onEditProfile, onLogou
               key={interest}
               className={cn(
                 "capitalize border-0",
-                INTEREST_COLORS[interest] || "bg-muted text-muted-foreground"
+                INTEREST_COLORS[interest] ?? "bg-muted text-muted-foreground"
               )}
             >
               {interest}
             </Badge>
           ))}
-          <Button variant="outline" size="sm" className="h-6 gap-1 px-2">
+          <Button variant="outline" size="sm" className="h-6 gap-1 px-2" onClick={onAddInterest}>
             <Plus className="h-3 w-3" />
             Add
           </Button>
@@ -111,7 +152,7 @@ export function ProfileView({ user, trips = [sampleTrip], onEditProfile, onLogou
           </div>
           <div className="flex items-center gap-1">
             <Sparkles className="h-4 w-4 text-primary" />
-            <span className="font-semibold">12</span>
+            <span className="font-semibold">{resolvedGemsFoundCount}</span>
             <span className="ml-1 text-muted-foreground">gems found</span>
           </div>
         </div>
@@ -121,13 +162,12 @@ export function ProfileView({ user, trips = [sampleTrip], onEditProfile, onLogou
 
       <ScrollArea className="flex-1">
         <div className="space-y-6 p-6">
-          {/* Upcoming trips */}
           <div>
             <h2 className="mb-3 font-semibold">Upcoming Trips</h2>
             {upcomingTrips.length > 0 ? (
               <div className="space-y-3">
                 {upcomingTrips.map((trip) => (
-                  <TripCard key={trip.id} trip={trip} />
+                  <TripCard key={trip.id} trip={trip} onClick={onSelectTrip} />
                 ))}
               </div>
             ) : (
@@ -136,26 +176,24 @@ export function ProfileView({ user, trips = [sampleTrip], onEditProfile, onLogou
                 <p className="mt-2 text-sm text-muted-foreground">
                   No trips planned yet
                 </p>
-                <Button className="mt-3" size="sm">
+                <Button className="mt-3" size="sm" onClick={onCreateTrip}>
                   Plan a trip
                 </Button>
               </div>
             )}
           </div>
 
-          {/* Past trips */}
-          {pastTrips.length > 0 && (
+          {pastTrips.length > 0 ? (
             <div>
               <h2 className="mb-3 font-semibold">Past Trips</h2>
               <div className="space-y-3">
                 {pastTrips.map((trip) => (
-                  <TripCard key={trip.id} trip={trip} isPast />
+                  <TripCard key={trip.id} trip={trip} isPast onClick={onSelectTrip} />
                 ))}
               </div>
             </div>
-          )}
+          ) : null}
 
-          {/* Settings */}
           <div>
             <h2 className="mb-3 font-semibold">Settings</h2>
             <div className="space-y-1">
@@ -163,14 +201,15 @@ export function ProfileView({ user, trips = [sampleTrip], onEditProfile, onLogou
                 icon={<Globe className="h-4 w-4" />}
                 label="Visibility settings"
                 hasChevron
+                onClick={onOpenVisibilitySettings}
               />
               <SettingsRow
                 icon={<Bell className="h-4 w-4" />}
                 label="Notifications"
                 action={
                   <Switch
-                    checked={notifications}
-                    onCheckedChange={setNotifications}
+                    checked={resolvedNotifications}
+                    onCheckedChange={handleNotificationChange}
                   />
                 }
               />
@@ -178,13 +217,17 @@ export function ProfileView({ user, trips = [sampleTrip], onEditProfile, onLogou
                 icon={<Moon className="h-4 w-4" />}
                 label="Dark mode"
                 action={
-                  <Switch checked={darkMode} onCheckedChange={setDarkMode} />
+                  <Switch
+                    checked={resolvedDarkMode}
+                    onCheckedChange={handleDarkModeChange}
+                  />
                 }
               />
               <SettingsRow
                 icon={<HelpCircle className="h-4 w-4" />}
                 label="Help & Support"
                 hasChevron
+                onClick={onOpenHelpSupport}
               />
               <SettingsRow
                 icon={<LogOut className="h-4 w-4" />}
@@ -200,24 +243,21 @@ export function ProfileView({ user, trips = [sampleTrip], onEditProfile, onLogou
   )
 }
 
-// ============ Sub-components ============
-
 interface TripCardProps {
   trip: Trip
   isPast?: boolean
+  onClick?: (tripId: string) => void
 }
 
-function TripCard({ trip, isPast }: TripCardProps) {
+function TripCard({ trip, isPast, onClick }: TripCardProps) {
   const startDate = parseISO(trip.startDate)
   const endDate = parseISO(trip.endDate)
-
-  return (
-    <div
-      className={cn(
-        "flex gap-4 rounded-xl border bg-card p-3 transition-shadow hover:shadow-md",
-        isPast && "opacity-70"
-      )}
-    >
+  const className = cn(
+    "flex w-full gap-4 rounded-xl border bg-card p-3 text-left transition-shadow hover:shadow-md",
+    isPast && "opacity-70"
+  )
+  const content = (
+    <>
       <div className="relative h-16 w-16 min-h-16 flex-shrink-0 overflow-hidden rounded-lg">
         <Image
           src={trip.destination.image}
@@ -234,7 +274,7 @@ function TripCard({ trip, isPast }: TripCardProps) {
         <div className="mt-1 flex items-center gap-2 text-sm text-muted-foreground">
           <Calendar className="h-3 w-3" />
           <span>
-            {format(startDate, "MMM d")} – {format(endDate, "MMM d, yyyy")}
+            {format(startDate, "MMM d")} - {format(endDate, "MMM d, yyyy")}
           </span>
         </div>
         <div className="mt-1 flex items-center gap-2">
@@ -247,25 +287,35 @@ function TripCard({ trip, isPast }: TripCardProps) {
         </div>
       </div>
       <ChevronRight className="h-5 w-5 flex-shrink-0 self-center text-muted-foreground" />
-    </div>
+    </>
   )
+
+  if (onClick) {
+    return (
+      <button type="button" className={className} onClick={() => onClick(trip.id)}>
+        {content}
+      </button>
+    )
+  }
+
+  return <div className={className}>{content}</div>
 }
 
 interface SettingsRowProps {
-  icon: React.ReactNode
-  label: string
-  action?: React.ReactNode
-  hasChevron?: boolean
+  action?: ReactNode
   destructive?: boolean
+  hasChevron?: boolean
+  icon: ReactNode
+  label: string
   onClick?: () => void
 }
 
 function SettingsRow({
+  action,
+  destructive,
+  hasChevron,
   icon,
   label,
-  action,
-  hasChevron,
-  destructive,
   onClick,
 }: SettingsRowProps) {
   const baseClassName = cn(
@@ -281,7 +331,7 @@ function SettingsRow({
         <span className="text-sm font-medium">{label}</span>
       </div>
       {action}
-      {hasChevron && <ChevronRight className="h-4 w-4 text-muted-foreground" />}
+      {hasChevron ? <ChevronRight className="h-4 w-4 text-muted-foreground" /> : null}
     </>
   )
 

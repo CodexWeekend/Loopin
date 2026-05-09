@@ -1,13 +1,12 @@
 "use client"
 
-import { useState } from "react"
+import React, { useState } from "react"
 import Image from "next/image"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { cn } from "@/lib/utils"
 import {
   Search,
   MapPin,
@@ -22,14 +21,15 @@ import {
   DollarSign,
   Plus,
   Heart,
-  Filter,
   ChevronRight,
 } from "lucide-react"
-import type { City, Place, Neighborhood, PlaceCategory } from "@/lib/types"
+import type { City, Dish, Place, Neighborhood, PlaceCategory } from "@/lib/types"
 import { cities, places, tokyoDishes } from "@/lib/sample-data"
 
 interface ExploreViewProps {
   city?: City
+  places?: Place[]
+  dishes?: Dish[]
   onPlaceSelect?: (place: Place) => void
   onAddToTrip?: (place: Place) => void
 }
@@ -42,14 +42,22 @@ const CATEGORIES: { id: PlaceCategory | "all"; label: string; icon: React.Elemen
   { id: "shopping", label: "Shopping", icon: ShoppingBag },
 ]
 
-export function ExploreView({ city, onPlaceSelect, onAddToTrip }: ExploreViewProps) {
+export function ExploreView({
+  city,
+  places: providedPlaces,
+  dishes: providedDishes,
+  onPlaceSelect,
+  onAddToTrip,
+}: ExploreViewProps) {
   const [searchQuery, setSearchQuery] = useState("")
   const [activeCategory, setActiveCategory] = useState<PlaceCategory | "all">("all")
   const [showHiddenOnly, setShowHiddenOnly] = useState(false)
 
   const currentCity = city || cities[0]
+  const availablePlaces = providedPlaces ?? places
+  const availableDishes = providedDishes ?? tokyoDishes
   
-  const filteredPlaces = places.filter((place) => {
+  const filteredPlaces = availablePlaces.filter((place) => {
     const matchesSearch = place.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       place.description.toLowerCase().includes(searchQuery.toLowerCase())
     const matchesCategory = activeCategory === "all" || place.category === activeCategory
@@ -57,8 +65,8 @@ export function ExploreView({ city, onPlaceSelect, onAddToTrip }: ExploreViewPro
     return matchesSearch && matchesCategory && matchesHidden
   })
 
-  const hiddenGems = places.filter(p => p.hiddenness === "hidden")
-  const mustSee = places.filter(p => p.popularityScore > 80)
+  const hiddenGems = availablePlaces.filter((place) => place.hiddenness === "hidden")
+  const mustSee = availablePlaces.filter((place) => place.popularityScore > 80)
 
   return (
     <div className="flex h-full flex-col">
@@ -226,7 +234,7 @@ export function ExploreView({ city, onPlaceSelect, onAddToTrip }: ExploreViewPro
               </p>
             </div>
             <div className="space-y-4">
-              {tokyoDishes.map((dish) => (
+              {availableDishes.map((dish) => (
                 <div key={dish.id} className="flex gap-4 rounded-xl border bg-card p-4">
                   {dish.image && (
                     <div className="relative h-20 w-20 min-h-20 flex-shrink-0 overflow-hidden rounded-lg">

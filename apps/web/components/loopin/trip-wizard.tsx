@@ -1,20 +1,15 @@
 "use client"
 
-import { useState } from "react"
+import React, { useState } from "react"
 import Image from "next/image"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
 import { Badge } from "@/components/ui/badge"
 import { Calendar } from "@/components/ui/calendar"
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { cn } from "@/lib/utils"
-import { format, addDays, differenceInDays } from "date-fns"
+import { format, differenceInDays } from "date-fns"
 import {
   CalendarDays,
-  Users,
-  DollarSign,
   Sparkles,
   ChevronLeft,
   ChevronRight,
@@ -37,6 +32,8 @@ interface TripWizardProps {
   open: boolean
   onClose: () => void
   onComplete: (trip: Trip) => void
+  cities?: City[]
+  today?: Date
 }
 
 const STEPS = [
@@ -79,8 +76,15 @@ const HIDDEN_GEM_PREFS: { id: HiddenGemPreference; label: string; description: s
   { id: "local", label: "Hidden gems", description: "Take me where the locals go" },
 ]
 
-export function TripWizard({ open, onClose, onComplete }: TripWizardProps) {
+export function TripWizard({
+  open,
+  onClose,
+  onComplete,
+  cities: providedCities,
+  today = new Date(),
+}: TripWizardProps) {
   const [step, setStep] = useState(0)
+  const availableCities = providedCities ?? cities
   
   // Form state
   const [selectedCity, setSelectedCity] = useState<City | null>(null)
@@ -199,7 +203,7 @@ export function TripWizard({ open, onClose, onComplete }: TripWizardProps) {
           {/* Step: Destination */}
           {currentStep.id === "destination" && (
             <div className="grid grid-cols-2 gap-3">
-              {cities.map((city) => (
+              {availableCities.map((city) => (
                 <button
                   key={city.id}
                   onClick={() => setSelectedCity(city)}
@@ -248,7 +252,7 @@ export function TripWizard({ open, onClose, onComplete }: TripWizardProps) {
                 selected={dateRange}
                 onSelect={(range) => setDateRange({ from: range?.from, to: range?.to })}
                 numberOfMonths={2}
-                disabled={{ before: new Date() }}
+                disabled={{ before: today }}
                 className="rounded-xl border"
               />
               {dateRange.from && dateRange.to && (

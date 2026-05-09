@@ -1,7 +1,7 @@
 "use client"
 
 import Image from "next/image"
-import type { Trip } from "@/lib/types"
+import type { Trip, User } from "@/lib/types"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { format, parseISO } from "date-fns"
@@ -19,29 +19,57 @@ import {
 } from "lucide-react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { useTheme } from "next-themes"
-import { sampleUsers } from "@/lib/sample-data"
 
 interface TripHeaderProps {
   trip: Trip
-  onShare?: () => void
+  currentUser?: Pick<User, "avatar" | "id" | "name"> | null
+  statusLabel?: string
+  tripLabel?: string
   onNewTrip?: () => void
+  onShare?: () => void
+  onTripMenuClick?: () => void
+  onUserMenuClick?: () => void
 }
 
-export function TripHeader({ trip, onShare, onNewTrip }: TripHeaderProps) {
-  const user = sampleUsers[0]
+export function TripHeader({
+  trip,
+  currentUser,
+  statusLabel,
+  tripLabel,
+  onNewTrip,
+  onShare,
+  onTripMenuClick,
+  onUserMenuClick,
+}: TripHeaderProps) {
+  const tripOwner = trip.collaborators.find((collaborator) => collaborator.role === "owner")?.user
+    ?? trip.collaborators[0]?.user
+
+  const displayUser = currentUser ?? tripOwner ?? {
+    id: "loopin-viewer",
+    name: "Traveler",
+    avatar: undefined,
+  }
+
+  const resolvedStatusLabel = statusLabel
+    ?? (trip.status === "completed" ? "Completed" : trip.status === "draft" ? "Draft" : "Saved")
+  const resolvedTripLabel = tripLabel ?? `${trip.destination.name} Trip`
 
   return (
     <header className="flex items-center justify-between border-b border-border bg-card px-6 py-4">
       <div className="flex items-center gap-3">
-        <button className="flex items-center gap-2 rounded-lg px-2 py-1 hover:bg-muted">
+        <button
+          type="button"
+          className="flex items-center gap-2 rounded-lg px-2 py-1 hover:bg-muted"
+          onClick={onTripMenuClick}
+        >
           <span className="text-lg font-semibold text-foreground">
-            {trip.destination.name} Trip
+            {resolvedTripLabel}
           </span>
           <ChevronDown className="h-4 w-4 text-muted-foreground" />
         </button>
         <div className="flex items-center gap-1.5 text-sm text-primary">
           <Check className="h-4 w-4" />
-          <span>Saved</span>
+          <span>{resolvedStatusLabel}</span>
         </div>
       </div>
 
@@ -55,14 +83,18 @@ export function TripHeader({ trip, onShare, onNewTrip }: TripHeaderProps) {
           Share trip
         </Button>
         <ThemeToggle />
-        <div className="flex items-center gap-2">
+        <button
+          type="button"
+          className="flex items-center gap-2 rounded-lg px-2 py-1 hover:bg-muted"
+          onClick={onUserMenuClick}
+        >
           <Avatar className="h-8 w-8">
-            <AvatarImage src={user.avatar} />
-            <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
+            <AvatarImage src={displayUser.avatar} />
+            <AvatarFallback>{displayUser.name.charAt(0)}</AvatarFallback>
           </Avatar>
-          <span className="text-sm font-medium text-foreground">{user.name}</span>
+          <span className="text-sm font-medium text-foreground">{displayUser.name}</span>
           <ChevronDown className="h-4 w-4 text-muted-foreground" />
-        </div>
+        </button>
       </div>
     </header>
   )
@@ -85,7 +117,17 @@ function ThemeToggle() {
   )
 }
 
-export function TripOverview({ trip }: { trip: Trip }) {
+interface TripOverviewProps {
+  trip: Trip
+  onAdjustPreferences?: () => void
+  onGenerateItinerary?: () => void
+}
+
+export function TripOverview({
+  trip,
+  onAdjustPreferences,
+  onGenerateItinerary,
+}: TripOverviewProps) {
   const startDate = parseISO(trip.startDate)
   const endDate = parseISO(trip.endDate)
   
@@ -107,7 +149,7 @@ export function TripOverview({ trip }: { trip: Trip }) {
               {trip.destination.name}, {trip.destination.country}
             </h2>
             <p className="mt-1 text-sm text-muted-foreground">
-              {format(startDate, "MMM d")} – {format(endDate, "MMM d, yyyy")} • {trip.days.length} days
+              {format(startDate, "MMM d")} - {format(endDate, "MMM d, yyyy")} • {trip.days.length} days
             </p>
 
             <div className="mt-4 flex items-center gap-6 text-sm text-muted-foreground">
@@ -138,11 +180,11 @@ export function TripOverview({ trip }: { trip: Trip }) {
           </div>
 
           <div className="flex flex-col gap-2">
-            <Button className="gap-2">
+            <Button className="gap-2" onClick={onGenerateItinerary}>
               <Sparkles className="h-4 w-4" />
               Generate Itinerary
             </Button>
-            <Button variant="outline" className="gap-2">
+            <Button variant="outline" className="gap-2" onClick={onAdjustPreferences}>
               <Settings className="h-4 w-4" />
               Adjust preferences
             </Button>

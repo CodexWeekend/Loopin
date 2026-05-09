@@ -38,6 +38,7 @@ import { swapSuggestions, places } from "@/lib/sample-data"
 interface ItineraryViewProps {
   trip: Trip
   selectedStopId?: string
+  onRegenerate?: () => void
   onStopSelect?: (stop: DayStop) => void
   onStopRemove?: (dayIndex: number, stopId: string) => void
   onStopSwap?: (dayIndex: number, stopId: string, newPlace: Place) => void
@@ -47,6 +48,7 @@ interface ItineraryViewProps {
 export function ItineraryView({
   trip,
   selectedStopId,
+  onRegenerate,
   onStopSelect,
   onStopRemove,
   onStopSwap,
@@ -66,7 +68,7 @@ export function ItineraryView({
     <ScrollArea className="h-full">
       <div className="space-y-4 p-6">
         {/* Trip Summary */}
-        <TripSummary trip={trip} totalCost={totalCost} />
+        <TripSummary trip={trip} totalCost={totalCost} onRegenerate={onRegenerate} />
 
         {/* Day Plans */}
         {trip.days.map((dayPlan, dayIndex) => (
@@ -95,7 +97,15 @@ export function ItineraryView({
 }
 
 // ============ Trip Summary ============
-function TripSummary({ trip, totalCost }: { trip: Trip; totalCost: number }) {
+function TripSummary({
+  trip,
+  totalCost,
+  onRegenerate,
+}: {
+  onRegenerate?: () => void
+  totalCost: number
+  trip: Trip
+}) {
   const startDate = parseISO(trip.startDate)
   const endDate = parseISO(trip.endDate)
 
@@ -134,7 +144,7 @@ function TripSummary({ trip, totalCost }: { trip: Trip; totalCost: number }) {
           </div>
         </div>
         <div className="flex flex-col gap-2">
-          <Button className="gap-2">
+          <Button className="gap-2" onClick={onRegenerate}>
             <Sparkles className="h-4 w-4" />
             Regenerate
           </Button>
