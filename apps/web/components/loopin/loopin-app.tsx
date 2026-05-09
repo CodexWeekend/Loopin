@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useMemo, useState } from "react"
+import { usePathname, useRouter } from "next/navigation"
 import { Sidebar } from "@/components/loopin/sidebar"
 import { TripHeader } from "@/components/loopin/trip-header"
 import { ItineraryView, PlaceDetailPanel } from "@/components/loopin/itinerary-view"
@@ -42,6 +43,8 @@ export default function LoopinApp({
   initialTripId?: string
 }) {
   const { isLoading, signOut } = useAuth()
+  const pathname = usePathname()
+  const router = useRouter()
   const [activeTab, setActiveTab] = useState<ActiveTab>("trips")
   const [appState, setAppState] = useState<LoopinAppState | null>(null)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
@@ -63,6 +66,18 @@ export default function LoopinApp({
   }, [initialTripId, isLoading])
 
   const currentTrip = appState?.currentTrip ?? null
+
+  useEffect(() => {
+    if (!currentTrip) {
+      return
+    }
+
+    const targetPath = `/trips/${currentTrip.id}`
+
+    if (pathname !== targetPath) {
+      router.replace(targetPath)
+    }
+  }, [currentTrip?.id, pathname, router])
 
   useEffect(() => {
     if (!currentTrip) {
@@ -495,6 +510,7 @@ export default function LoopinApp({
             currentUser={currentUser}
             onNewTrip={() => setIsTripWizardOpen(true)}
             onShare={() => setIsShareDialogOpen(true)}
+            onUserMenuClick={() => setActiveTab("profile")}
           />
         ) : null}
 
