@@ -11,6 +11,7 @@ This repository is currently in a documentation-first bootstrap phase. The repo 
 - Monorepo scaffolding in `apps/` and `packages/`
 - Baseline shell scripts: [`init.sh`](init.sh), [`sync-dev.sh`](sync-dev.sh), [`test-all.sh`](test-all.sh)
 - Baseline CI in [`.github/workflows/ci.yml`](.github/workflows/ci.yml)
+- Shared trip contracts, naive itinerary logic, and the first API slice for create/get/generate trip flows
 - Agent onboarding and workflow rules in [`AGENTS.md`](AGENTS.md)
 - Thin compatibility wrappers for Claude and Gemini in [`CLAUDE.md`](CLAUDE.md) and [`GEMINI.md`](GEMINI.md)
 - A current-state ledger in [`docs/implementation-status.md`](docs/implementation-status.md)
@@ -21,8 +22,8 @@ This repository is currently in a documentation-first bootstrap phase. The repo 
 
 - No real product runtime yet
 - No trip planner UI or mobile in-trip experience yet
-- No backend API routes or persistence yet
-- No vertical slice from trip creation to itinerary rendering yet
+- No persistent storage yet
+- No end-to-end vertical slice rendered in web or mobile yet
 
 Treat those gaps as known bootstrap work, not missing context.
 
@@ -86,6 +87,6 @@ The target backend is a layered architecture: interface -> application/domain se
 
 ## Current Next Step
 
-The next recommended milestone is Milestone 2: implement the first vertical slice across shared domain logic, API, web, and mobile. That slice should cover simple trip creation, naive itinerary generation, and rendering the result in the app shells.
+The next recommended work is the UI half of Milestone 2: replace the placeholder web and mobile workspaces with real app shells that can create a trip and render the naive itinerary from the current shared/API foundation.
 
 Use [`docs/roadmap.md`](docs/roadmap.md) and [`docs/implementation-status.md`](docs/implementation-status.md) as the operational source of truth for that work.

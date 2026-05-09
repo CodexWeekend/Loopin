@@ -10,7 +10,11 @@
   - `init.sh`, `sync-dev.sh`, and `test-all.sh`
   - baseline CI
   - a real `dev` integration branch
-- The repo does not yet include the actual Loopin product runtime, API flows, or frontend trip planner features.
+- The repo now includes the first Milestone 2 backend/domain slice:
+  - shared trip and itinerary contracts
+  - naive itinerary planning logic
+  - API routes for create trip, fetch trip, and generate itinerary
+- The repo does not yet include the web/mobile planner UI or persistent data storage.
 
 ## Completed
 
@@ -54,6 +58,20 @@
   Why: The documented branch workflow now matches the actual repo workflow.
   Evidence: Git branch state on `origin`
 
+### 2026-05-09: Trip and itinerary foundation
+
+- What: Added shared trip, place, and itinerary contracts plus runtime schemas.
+  Why: Web, mobile, and API need one shared source of truth for the first real product flow.
+  Evidence: `packages/shared/src/index.ts`, `packages/shared/tests/trip-schemas.test.ts`
+
+- What: Added naive itinerary generation and travel-cost estimation helpers.
+  Why: The first vertical slice needs deterministic planning behavior before advanced routing and discovery exist.
+  Evidence: `packages/core/src/index.ts`, `packages/geo/src/index.ts`, `packages/core/tests/trip-planning.test.ts`
+
+- What: Added API routes for create trip, fetch trip, and generate itinerary using an in-memory store and seeded places.
+  Why: The product now has a real backend slice that web and mobile can consume next.
+  Evidence: `apps/api/src/index.ts`, `apps/api/tests/trip-routes.test.ts`
+
 ## Why It Was Done
 
 - Portability: the project should not depend on `C:\Users\maiqu\Downloads\plantxt.txt` or any other machine-local file.
@@ -63,21 +81,20 @@
 
 ## Open Gaps
 
-- No backend API routes yet
-- No seeded city/place data yet
-- No trip planning domain services yet
 - No real web UI or mobile app flows yet
-- No trip creation to itinerary vertical slice yet
+- No trip creation to itinerary rendering flow in web or mobile yet
+- No persistent trip storage yet
+- No discovery ingestion beyond seeded places yet
 - No discovery, near-me, social, or offline features yet
 
 ## Next Recommended Task
 
 Implement Milestone 2 from `docs/roadmap.md`:
 
-1. Add the shared trip and itinerary domain contracts in `packages/shared`, `packages/geo`, and `packages/core`.
-2. Implement a minimal backend API flow for trip creation and naive itinerary generation.
-3. Replace the placeholder web and mobile workspaces with real app shells that render the vertical slice.
-4. Verify the new slice in targeted intervals and keep the status ledger current.
+1. Replace the placeholder web workspace with a real planner shell that can create a trip and display the generated itinerary.
+2. Replace the placeholder mobile workspace with a real trip summary shell for the same flow.
+3. Keep verification interval-based: targeted route tests, targeted UI tests, plus lint/typecheck after each slice.
+4. Keep the status ledger current as Milestone 2 expands.
 
 ## Blocked/Needs Decision
 

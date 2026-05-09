@@ -5,9 +5,9 @@ import { apiWorkspace } from '../src/index';
 describe('api workspace scaffold', () => {
   test('declares the backend workspace metadata', () => {
     expect(apiWorkspace).toEqual({
-      milestone: 'scaffold',
+      milestone: 'vertical-slice',
       name: '@loopin/api',
-      purpose: 'backend service entrypoint placeholder',
+      purpose: 'backend service foundation for trip creation and itinerary generation',
     });
   });
 });

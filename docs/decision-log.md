@@ -55,3 +55,9 @@ Retirement note:
 - Status: active
 - Decision: The canonical command contract uses `./init.sh`, `./sync-dev.sh`, and `./test-all.sh`. On Windows, contributors should use Git Bash or WSL until equivalent repo-native wrappers are added.
 - Why: This preserves one standard command vocabulary while still documenting how Windows contributors should execute it.
+
+### D-009: First vertical slice uses seeded places and in-memory trips
+
+- Status: active
+- Decision: The first trip creation and itinerary-generation slice uses a seeded place catalog and an in-memory trip store.
+- Why: This keeps the first real product flow small and testable before persistence, discovery ingestion, and social state are added.
